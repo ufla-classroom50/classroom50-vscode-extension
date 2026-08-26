@@ -13,7 +13,7 @@
     "onStartupFinished"
   ],
   "main": "./out/extension.js",
-  "contributes": {},
+  "contributes": {}
   "scripts": {
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
@@ -38,6 +38,6 @@
     "serialize-javascript": "^7.0.6"
   },
   "dependencies": {
-    "js-yaml": "^4.3.1"
+    "js-yaml": "^5.4.0"
   }
 }
