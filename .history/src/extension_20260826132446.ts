@@ -41,6 +41,9 @@ function parseGitRemote(): RepoInfo | undefined {
     try {
         const cwd = workspaceFolders[0].uri.fsPath;
         const remoteUrl = execSync('git remote get-url origin', { cwd }).toString().trim();
+
+        // Suporta HTTPS: https://github.com/org/repo.git
+        // e SSH: git@github.com:org/repo.git
         const httpsMatch = remoteUrl.match(/https:\/\/github\.com\/([^/]+)\/([^/]+?)(\.git)?$/);
         const sshMatch = remoteUrl.match(/git@github\.com:([^/]+)\/([^/]+?)(\.git)?$/);
 
