@@ -7,7 +7,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
     if (!session) {
         vscode.window.showErrorMessage(
-            'Classroom 50: nao foi possivel autenticar com o GitHub. Faca login para continuar.'
+            'Classroom 50: não foi possível autenticar com o GitHub. Faça login para continuar.'
         );
         return;
     }
