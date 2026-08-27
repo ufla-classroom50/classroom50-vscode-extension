@@ -115,14 +115,17 @@ export async function activate(context: vscode.ExtensionContext) {
     const token = session.accessToken;
     const { org, repo } = repoInfo;
 
+    // Busca o PR de feedback
     const prNumber = await fetchFeedbackPR(token, org, repo);
     if (!prNumber) {
         vscode.window.showWarningMessage('Classroom 50: PR de feedback não encontrado.');
         return;
     }
 
+    // Salva o ID do último comentário visto
     let lastCommentId: number = context.globalState.get(`lastCommentId_${repo}`, 0);
 
+    // Função de polling
     const checkForNewComments = async () => {
         const comment = await fetchLatestComment(token, org, repo, prNumber);
         if (!comment || comment.id <= lastCommentId) { return; }
@@ -132,8 +135,9 @@ export async function activate(context: vscode.ExtensionContext) {
 
         const preview = stripMarkdown(comment.body).substring(0, 100);
 
+        // Nível 1 + 2 + 3
         const action = await vscode.window.showInformationMessage(
-            `Novo feedback — ${config['assignment-name']}\n${preview}...`,
+            `💬 Novo feedback — ${config['assignment-name']}\n${preview}...`,
             'Ver no GitHub'
         );
 
@@ -142,6 +146,7 @@ export async function activate(context: vscode.ExtensionContext) {
         }
     };
 
+    // Executa imediatamente e depois em intervalos
     await checkForNewComments();
 
     const intervalMs = config['polling-interval-minutes'] * 60 * 1000;
