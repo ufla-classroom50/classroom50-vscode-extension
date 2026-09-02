@@ -24,20 +24,20 @@ interface GitHubComment {
 function loadConfig(): ExtensionConfig | undefined {
     const workspaceFolders = vscode.workspace.workspaceFolders;
     if (!workspaceFolders) {
-        vscode.window.showErrorMessage('Classroom 50: no folder open in workspace.');
+        vscode.window.showErrorMessage('Classroom 50: nenhuma pasta aberta no workspace.');
         return undefined;
     }
 
     const configPath = path.join(workspaceFolders[0].uri.fsPath, '.c50extension.json');
     if (!fs.existsSync(configPath)) {
-        vscode.window.showErrorMessage('Classroom 50: .c50extension.json file not found.');
+        vscode.window.showErrorMessage('Classroom 50: arquivo .c50extension.json não encontrado.');
         return undefined;
     }
 
     try {
         return JSON.parse(fs.readFileSync(configPath, 'utf8')) as ExtensionConfig;
     } catch {
-        vscode.window.showErrorMessage('Classroom 50: .c50extension.json file is invalid.');
+        vscode.window.showErrorMessage('Classroom 50: arquivo .c50extension.json inválido.');
         return undefined;
     }
 }
@@ -53,12 +53,12 @@ function parseGitRemote(): RepoInfo | undefined {
         const sshMatch = remoteUrl.match(/git@github\.com:([^/]+)\/([^/]+?)(\.git)?$/);
         const match = httpsMatch || sshMatch;
         if (!match) {
-            vscode.window.showErrorMessage('Classroom 50: could not identify the GitHub repository.');
+            vscode.window.showErrorMessage('Classroom 50: não foi possível identificar o repositório GitHub.');
             return undefined;
         }
         return { org: match[1], repo: match[2] };
     } catch {
-        vscode.window.showErrorMessage('Classroom 50: open folder is not a git repository.');
+        vscode.window.showErrorMessage('Classroom 50: pasta aberta não é um repositório git.');
         return undefined;
     }
 }
@@ -102,12 +102,23 @@ function stripMarkdown(text: string): string {
         .trim();
 }
 
+async function openInVSCode(prUrl: string): Promise<boolean> {
+    try {
+        // Tenta abrir na extensão GitHub Pull Requests
+        const uri = vscode.Uri.parse(prUrl);
+        await vscode.commands.executeCommand('github.openPullRequest', uri);
+        return true;
+    } catch {
+        return false;
+    }
+}
+
 export async function activate(context: vscode.ExtensionContext) {
     console.log('Classroom 50 extension is now active!');
 
     const session = await getGitHubSession();
     if (!session) {
-        vscode.window.showErrorMessage('Classroom 50: could not authenticate with GitHub.');
+        vscode.window.showErrorMessage('Classroom 50: não foi possível autenticar com o GitHub.');
         return;
     }
 
@@ -122,7 +133,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
     const prNumber = await fetchFeedbackPR(token, org, repo);
     if (!prNumber) {
-        vscode.window.showWarningMessage('Classroom 50: feedback PR not found.');
+        vscode.window.showWarningMessage('Classroom 50: PR de feedback não encontrado.');
         return;
     }
 
@@ -132,6 +143,7 @@ export async function activate(context: vscode.ExtensionContext) {
         const comment = await fetchLatestComment(token, org, repo, prNumber);
         if (!comment || comment.id <= lastCommentId) { return; }
 
+        // Filtra por usuário se a lista não estiver vazia
         const allowedUsers = config['notify-from-users'];
         if (allowedUsers.length > 0 && !allowedUsers.includes(comment.user.login)) { return; }
 
@@ -141,23 +153,21 @@ export async function activate(context: vscode.ExtensionContext) {
         const preview = stripMarkdown(comment.body).substring(0, 100);
 
         const action = await vscode.window.showInformationMessage(
-            `💬 New feedback — ${config['assignment-name']}\n${preview}...`,
-            'View on GitHub'
+            `💬 Novo feedback — ${config['assignment-name']}\n${preview}...`,
+            'Ver no VS Code',
+            'Ver no GitHub'
         );
 
-        if (action === 'View on GitHub') {
+        if (action === 'Ver no VS Code') {
+            const openedInVSCode = await openInVSCode(comment.html_url);
+            if (!openedInVSCode) {
+                // Fallback para o navegador
+                vscode.env.openExternal(vscode.Uri.parse(comment.html_url));
+            }
+        } else if (action === 'Ver no GitHub') {
             vscode.env.openExternal(vscode.Uri.parse(comment.html_url));
         }
     };
-
-    const checkCommand = vscode.commands.registerCommand(
-        'classroom50-vscode-extension.checkFeedback',
-        async () => {
-            await checkForNewComments();
-            vscode.window.showInformationMessage('Classroom 50: check completed.');
-        }
-    );
-    context.subscriptions.push(checkCommand);
 
     await checkForNewComments();
 

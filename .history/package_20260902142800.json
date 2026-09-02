@@ -1,7 +1,7 @@
 {
   "name": "classroom50-vscode-extension",
   "displayName": "classroom50-vscode-extension",
-  "description": "Notifies students about new feedback comments in Classroom 50 assignments",
+  "description": "Notifies students about new feedback in Classroom 50",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.134.0"
