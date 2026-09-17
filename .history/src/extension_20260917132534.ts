@@ -329,7 +329,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
   const username = await getAuthenticatedUsername(token);
   const role = username ? await getUserRole(token, org, username) : undefined;
-  const isTeacher = role === 'admin';
+  const isTeacher = true; // TEMPORÁRIO
 
   const prNumber = await fetchFeedbackPR(token, org, repo);
   if (!prNumber) {

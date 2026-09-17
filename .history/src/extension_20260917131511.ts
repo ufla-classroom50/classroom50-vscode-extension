@@ -329,7 +329,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
   const username = await getAuthenticatedUsername(token);
   const role = username ? await getUserRole(token, org, username) : undefined;
-  const isTeacher = role === 'admin';
+  const isTeacher = true; // TEMPORÁRIO
 
   const prNumber = await fetchFeedbackPR(token, org, repo);
   if (!prNumber) {
@@ -350,7 +350,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
   const unreadStatusBarItem = vscode.window.createStatusBarItem(
     vscode.StatusBarAlignment.Right,
-    2000,
+    5000,
   );
   unreadStatusBarItem.command = "classroom50-vscode-extension.checkFeedback";
   context.subscriptions.push(unreadStatusBarItem);
@@ -498,7 +498,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
   const checkStatusBarItem = vscode.window.createStatusBarItem(
     vscode.StatusBarAlignment.Right,
-    1999,
+    1000,
   );
   checkStatusBarItem.text = "$(bell) Check Feedback";
   checkStatusBarItem.tooltip = "Classroom 50: check for new feedback";
@@ -508,7 +508,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
   const openPRStatusBarItem = vscode.window.createStatusBarItem(
     vscode.StatusBarAlignment.Right,
-    1998,
+    999,
   );
   openPRStatusBarItem.text = "$(git-pull-request) Feedback PR";
   openPRStatusBarItem.tooltip = "Classroom 50: open feedback PR in browser";
@@ -522,7 +522,7 @@ export async function activate(context: vscode.ExtensionContext) {
   ) {
     const supportLinksStatusBarItem = vscode.window.createStatusBarItem(
       vscode.StatusBarAlignment.Right,
-      1997,
+      998,
     );
     supportLinksStatusBarItem.text = "$(book) Support Materials";
     supportLinksStatusBarItem.tooltip = "Classroom 50: open support materials";
@@ -653,7 +653,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
     const listStudentsStatusBarItem = vscode.window.createStatusBarItem(
       vscode.StatusBarAlignment.Right,
-      1996,
+      997,
     );
     listStudentsStatusBarItem.text = "$(organization) List Students";
     listStudentsStatusBarItem.tooltip =
