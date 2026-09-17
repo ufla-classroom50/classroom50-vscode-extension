@@ -355,41 +355,23 @@ function formatCommentTitle(
 async function getMultilineText(
   placeholderText: string,
 ): Promise<string | undefined> {
-  const tempFilePath = path.join(
-    os.tmpdir(),
-    `c50-announcement-${Date.now()}.md`,
-  );
-  fs.writeFileSync(tempFilePath, placeholderText, "utf8");
-
-  const doc = await vscode.workspace.openTextDocument(tempFilePath);
-  await vscode.window.showTextDocument(doc, { preview: false });
-
-  vscode.window.showInformationMessage(
-    "Write your announcement in the editor. Save the file (Ctrl+S) when you are done.",
-  );
-
-  await new Promise<void>((resolve) => {
-    const saveDisposable = vscode.workspace.onDidSaveTextDocument(
-      (savedDoc) => {
-        if (savedDoc.uri.toString() === doc.uri.toString()) {
-          saveDisposable.dispose();
-          resolve();
-        }
-      },
-    );
+  const doc = await vscode.workspace.openTextDocument({
+    content: placeholderText,
+    language: "markdown",
   });
+  const editor = await vscode.window.showTextDocument(doc, { preview: false });
 
-  const finalText = fs.readFileSync(tempFilePath, "utf8").trim();
+  const choice = await vscode.window.showInformationMessage(
+    'Write your announcement in the editor. When ready, click "Done" to continue.',
+    { modal: true },
+    "Done",
+    "Cancel",
+  );
 
+  const finalText = editor.document.getText().trim();
   await vscode.commands.executeCommand("workbench.action.closeActiveEditor");
 
-  try {
-    fs.unlinkSync(tempFilePath);
-  } catch {
-    // ignore cleanup errors
-  }
-
-  if (finalText.length === 0 || finalText === placeholderText.trim()) {
+  if (choice !== "Done" || finalText.length === 0) {
     return undefined;
   }
 
@@ -422,7 +404,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
   const username = await getAuthenticatedUsername(token);
   const role = username ? await getUserRole(token, org, username) : undefined;
-  const isTeacher = true;
+  const isTeacher = role === "admin";
 
   const prNumber = await fetchFeedbackPR(token, org, repo);
   if (!prNumber) {
@@ -443,7 +425,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
   const unreadStatusBarItem = vscode.window.createStatusBarItem(
     vscode.StatusBarAlignment.Right,
-    2000,
+    5000,
   );
   unreadStatusBarItem.command = "classroom50-vscode-extension.checkFeedback";
   context.subscriptions.push(unreadStatusBarItem);
@@ -591,7 +573,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
   const checkStatusBarItem = vscode.window.createStatusBarItem(
     vscode.StatusBarAlignment.Right,
-    1999,
+    1000,
   );
   checkStatusBarItem.text = "$(bell) Check Feedback";
   checkStatusBarItem.tooltip = "Classroom 50: check for new feedback";
@@ -601,7 +583,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
   const openPRStatusBarItem = vscode.window.createStatusBarItem(
     vscode.StatusBarAlignment.Right,
-    1998,
+    999,
   );
   openPRStatusBarItem.text = "$(git-pull-request) Feedback PR";
   openPRStatusBarItem.tooltip = "Classroom 50: open feedback PR in browser";
@@ -615,7 +597,7 @@ export async function activate(context: vscode.ExtensionContext) {
   ) {
     const supportLinksStatusBarItem = vscode.window.createStatusBarItem(
       vscode.StatusBarAlignment.Right,
-      1997,
+      998,
     );
     supportLinksStatusBarItem.text = "$(book) Support Materials";
     supportLinksStatusBarItem.tooltip = "Classroom 50: open support materials";
@@ -730,7 +712,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
     const listStudentsStatusBarItem = vscode.window.createStatusBarItem(
       vscode.StatusBarAlignment.Right,
-      1996,
+      997,
     );
     listStudentsStatusBarItem.text = "$(organization) List Students";
     listStudentsStatusBarItem.tooltip =
@@ -877,7 +859,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
     const sendAnnouncementStatusBarItem = vscode.window.createStatusBarItem(
       vscode.StatusBarAlignment.Right,
-      1995,
+      996,
     );
     sendAnnouncementStatusBarItem.text = "$(megaphone) Send Announcement";
     sendAnnouncementStatusBarItem.tooltip =

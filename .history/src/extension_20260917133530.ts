@@ -282,55 +282,6 @@ async function fetchLastCommitDate(
   return new Date(commits[0].commit.author.date);
 }
 
-async function fetchStudentRepos(
-  token: string,
-  org: string,
-  classroomAssignment: string,
-): Promise<StudentRepo[]> {
-  const allRepos = await fetchOrgRepos(token, org);
-  const matchingRepos = allRepos.filter((r) =>
-    r.name.startsWith(`${classroomAssignment}-`),
-  );
-
-  const studentRepos: StudentRepo[] = [];
-  for (const r of matchingRepos) {
-    const commitDate = await fetchLastCommitDate(token, org, r.name);
-    const studentUsername = r.name.replace(`${classroomAssignment}-`, "");
-    studentRepos.push({
-      name: r.name,
-      username: studentUsername,
-      lastCommitDate: commitDate ?? new Date(0),
-    });
-  }
-
-  studentRepos.sort(
-    (a, b) => b.lastCommitDate.getTime() - a.lastCommitDate.getTime(),
-  );
-  return studentRepos;
-}
-
-async function postComment(
-  token: string,
-  org: string,
-  repo: string,
-  prNumber: number,
-  body: string,
-): Promise<boolean> {
-  const response = await fetch(
-    `https://api.github.com/repos/${org}/${repo}/issues/${prNumber}/comments`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: "application/vnd.github+json",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ body }),
-    },
-  );
-  return response.ok;
-}
-
 function stripMarkdown(text: string): string {
   return text
     .replace(/#{1,6}\s/g, "")
@@ -350,50 +301,6 @@ function formatCommentTitle(
     return `💬 New feedback — ${assignmentName}\n📍 ${fileName}:${comment.line ?? "?"}`;
   }
   return `💬 New feedback — ${assignmentName}`;
-}
-
-async function getMultilineText(
-  placeholderText: string,
-): Promise<string | undefined> {
-  const tempFilePath = path.join(
-    os.tmpdir(),
-    `c50-announcement-${Date.now()}.md`,
-  );
-  fs.writeFileSync(tempFilePath, placeholderText, "utf8");
-
-  const doc = await vscode.workspace.openTextDocument(tempFilePath);
-  await vscode.window.showTextDocument(doc, { preview: false });
-
-  vscode.window.showInformationMessage(
-    "Write your announcement in the editor. Save the file (Ctrl+S) when you are done.",
-  );
-
-  await new Promise<void>((resolve) => {
-    const saveDisposable = vscode.workspace.onDidSaveTextDocument(
-      (savedDoc) => {
-        if (savedDoc.uri.toString() === doc.uri.toString()) {
-          saveDisposable.dispose();
-          resolve();
-        }
-      },
-    );
-  });
-
-  const finalText = fs.readFileSync(tempFilePath, "utf8").trim();
-
-  await vscode.commands.executeCommand("workbench.action.closeActiveEditor");
-
-  try {
-    fs.unlinkSync(tempFilePath);
-  } catch {
-    // ignore cleanup errors
-  }
-
-  if (finalText.length === 0 || finalText === placeholderText.trim()) {
-    return undefined;
-  }
-
-  return finalText;
 }
 
 export async function activate(context: vscode.ExtensionContext) {
@@ -422,7 +329,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
   const username = await getAuthenticatedUsername(token);
   const role = username ? await getUserRole(token, org, username) : undefined;
-  const isTeacher = true;
+  const isTeacher = role === "admin";
 
   const prNumber = await fetchFeedbackPR(token, org, repo);
   if (!prNumber) {
@@ -632,7 +539,6 @@ export async function activate(context: vscode.ExtensionContext) {
   const timer = setInterval(checkForNewComments, intervalMs);
   context.subscriptions.push({ dispose: () => clearInterval(timer) });
 
-  // Comandos exclusivos do professor
   if (isTeacher) {
     const listStudentsCommand = vscode.commands.registerCommand(
       "classroom50-vscode-extension.listStudents",
@@ -653,18 +559,35 @@ export async function activate(context: vscode.ExtensionContext) {
             title: "Classroom 50: fetching students...",
           },
           async () => {
-            const studentRepos = await fetchStudentRepos(
-              token,
-              org,
-              classroomAssignment,
+            const allRepos = await fetchOrgRepos(token, org);
+            const matchingRepos = allRepos.filter((r) =>
+              r.name.startsWith(`${classroomAssignment}-`),
             );
 
-            if (studentRepos.length === 0) {
+            if (matchingRepos.length === 0) {
               vscode.window.showInformationMessage(
                 "Classroom 50: no student repositories found.",
               );
               return;
             }
+
+            const studentRepos: StudentRepo[] = [];
+            for (const r of matchingRepos) {
+              const commitDate = await fetchLastCommitDate(token, org, r.name);
+              const studentUsername = r.name.replace(
+                `${classroomAssignment}-`,
+                "",
+              );
+              studentRepos.push({
+                name: r.name,
+                username: studentUsername,
+                lastCommitDate: commitDate ?? new Date(0),
+              });
+            }
+
+            studentRepos.sort(
+              (a, b) => b.lastCommitDate.getTime() - a.lastCommitDate.getTime(),
+            );
 
             const items = studentRepos.map((s) => ({
               label: s.username,
@@ -739,153 +662,6 @@ export async function activate(context: vscode.ExtensionContext) {
       "classroom50-vscode-extension.listStudents";
     listStudentsStatusBarItem.show();
     context.subscriptions.push(listStudentsStatusBarItem);
-
-    const sendAnnouncementCommand = vscode.commands.registerCommand(
-      "classroom50-vscode-extension.sendAnnouncement",
-      async () => {
-        const classroomAssignment = await vscode.window.showInputBox({
-          prompt:
-            "Enter the classroom-assignment prefix (e.g. ppoo-2026-atividade-1)",
-          placeHolder: "classroom-assignment",
-        });
-
-        if (!classroomAssignment) {
-          return;
-        }
-
-        const studentRepos = await vscode.window.withProgress(
-          {
-            location: vscode.ProgressLocation.Notification,
-            title: "Classroom 50: fetching students...",
-          },
-          async () => fetchStudentRepos(token, org, classroomAssignment),
-        );
-
-        if (studentRepos.length === 0) {
-          vscode.window.showInformationMessage(
-            "Classroom 50: no student repositories found.",
-          );
-          return;
-        }
-
-        const items = studentRepos.map((s) => ({
-          label: s.username,
-          description:
-            s.lastCommitDate.getTime() > 0
-              ? s.lastCommitDate.toLocaleString()
-              : "no commits",
-          repo: s.name,
-        }));
-
-        const selected = await vscode.window.showQuickPick(items, {
-          placeHolder:
-            "Select the students who should receive the announcement",
-          canPickMany: true,
-        });
-
-        if (!selected || selected.length === 0) {
-          return;
-        }
-
-        const announcementText = await getMultilineText(
-          "<!-- Write your announcement below. Do not delete this line. -->\n",
-        );
-
-        if (!announcementText) {
-          vscode.window.showInformationMessage(
-            "Classroom 50: announcement cancelled.",
-          );
-          return;
-        }
-
-        const cleanText = announcementText
-          .replace(
-            "<!-- Write your announcement below. Do not delete this line. -->",
-            "",
-          )
-          .trim();
-
-        if (cleanText.length === 0) {
-          vscode.window.showInformationMessage(
-            "Classroom 50: announcement is empty, cancelled.",
-          );
-          return;
-        }
-
-        const confirm = await vscode.window.showWarningMessage(
-          `You are about to send this announcement to ${selected.length} student(s). Continue?`,
-          { modal: true },
-          "Send",
-        );
-
-        if (confirm !== "Send") {
-          return;
-        }
-
-        const failedStudents: string[] = [];
-
-        await vscode.window.withProgress(
-          {
-            location: vscode.ProgressLocation.Notification,
-            title: "Classroom 50: sending announcement",
-            cancellable: false,
-          },
-          async (progress) => {
-            for (let i = 0; i < selected.length; i++) {
-              const student = selected[i];
-              progress.report({
-                message: `${i + 1}/${selected.length} — ${student.label}`,
-                increment: 100 / selected.length,
-              });
-
-              const studentPrNumber = await fetchFeedbackPR(
-                token,
-                org,
-                student.repo,
-              );
-              if (!studentPrNumber) {
-                failedStudents.push(student.label);
-                continue;
-              }
-
-              const success = await postComment(
-                token,
-                org,
-                student.repo,
-                studentPrNumber,
-                cleanText,
-              );
-              if (!success) {
-                failedStudents.push(student.label);
-              }
-            }
-          },
-        );
-
-        if (failedStudents.length === 0) {
-          vscode.window.showInformationMessage(
-            `Classroom 50: announcement sent to all ${selected.length} student(s).`,
-          );
-        } else {
-          vscode.window.showWarningMessage(
-            `Classroom 50: announcement sent, but failed for: ${failedStudents.join(", ")}.`,
-          );
-        }
-      },
-    );
-    context.subscriptions.push(sendAnnouncementCommand);
-
-    const sendAnnouncementStatusBarItem = vscode.window.createStatusBarItem(
-      vscode.StatusBarAlignment.Right,
-      1995,
-    );
-    sendAnnouncementStatusBarItem.text = "$(megaphone) Send Announcement";
-    sendAnnouncementStatusBarItem.tooltip =
-      "Classroom 50: send announcement to selected students";
-    sendAnnouncementStatusBarItem.command =
-      "classroom50-vscode-extension.sendAnnouncement";
-    sendAnnouncementStatusBarItem.show();
-    context.subscriptions.push(sendAnnouncementStatusBarItem);
   }
 }
 

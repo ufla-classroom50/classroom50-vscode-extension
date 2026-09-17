@@ -355,41 +355,26 @@ function formatCommentTitle(
 async function getMultilineText(
   placeholderText: string,
 ): Promise<string | undefined> {
-  const tempFilePath = path.join(
-    os.tmpdir(),
-    `c50-announcement-${Date.now()}.md`,
-  );
-  fs.writeFileSync(tempFilePath, placeholderText, "utf8");
-
-  const doc = await vscode.workspace.openTextDocument(tempFilePath);
+  const doc = await vscode.workspace.openTextDocument({
+    content: placeholderText,
+    language: "markdown",
+  });
   await vscode.window.showTextDocument(doc, { preview: false });
 
   vscode.window.showInformationMessage(
-    "Write your announcement in the editor. Save the file (Ctrl+S) when you are done.",
+    "Write your announcement in the editor. Close the tab when you are done.",
   );
 
-  await new Promise<void>((resolve) => {
-    const saveDisposable = vscode.workspace.onDidSaveTextDocument(
-      (savedDoc) => {
-        if (savedDoc.uri.toString() === doc.uri.toString()) {
-          saveDisposable.dispose();
-          resolve();
-        }
-      },
-    );
+  const finalText = await new Promise<string>((resolve) => {
+    const disposable = vscode.workspace.onDidCloseTextDocument((closedDoc) => {
+      if (closedDoc.uri.toString() === doc.uri.toString()) {
+        disposable.dispose();
+        resolve(closedDoc.getText().trim());
+      }
+    });
   });
 
-  const finalText = fs.readFileSync(tempFilePath, "utf8").trim();
-
-  await vscode.commands.executeCommand("workbench.action.closeActiveEditor");
-
-  try {
-    fs.unlinkSync(tempFilePath);
-  } catch {
-    // ignore cleanup errors
-  }
-
-  if (finalText.length === 0 || finalText === placeholderText.trim()) {
+  if (finalText.length === 0) {
     return undefined;
   }
 
