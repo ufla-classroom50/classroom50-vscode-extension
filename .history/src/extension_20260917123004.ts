@@ -20,8 +20,6 @@ interface GitHubComment {
   body: string;
   html_url: string;
   user: { login: string };
-  path?: string;
-  line?: number;
 }
 
 function loadConfig(): ExtensionConfig | undefined {
@@ -124,7 +122,7 @@ async function fetchFeedbackPR(
   return feedbackPR?.number;
 }
 
-async function fetchIssueComments(
+async function fetchAllComments(
   token: string,
   org: string,
   repo: string,
@@ -145,40 +143,6 @@ async function fetchIssueComments(
   return (await response.json()) as GitHubComment[];
 }
 
-async function fetchInlineComments(
-  token: string,
-  org: string,
-  repo: string,
-  prNumber: number,
-): Promise<GitHubComment[]> {
-  const response = await fetch(
-    `https://api.github.com/repos/${org}/${repo}/pulls/${prNumber}/comments`,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: "application/vnd.github+json",
-      },
-    },
-  );
-  if (!response.ok) {
-    return [];
-  }
-  return (await response.json()) as GitHubComment[];
-}
-
-async function fetchAllComments(
-  token: string,
-  org: string,
-  repo: string,
-  prNumber: number,
-): Promise<GitHubComment[]> {
-  const [issueComments, inlineComments] = await Promise.all([
-    fetchIssueComments(token, org, repo, prNumber),
-    fetchInlineComments(token, org, repo, prNumber),
-  ]);
-  return [...issueComments, ...inlineComments];
-}
-
 function stripMarkdown(text: string): string {
   return text
     .replace(/#{1,6}\s/g, "")
@@ -187,17 +151,6 @@ function stripMarkdown(text: string): string {
     .replace(/`(.*?)`/g, "$1")
     .replace(/\n/g, " ")
     .trim();
-}
-
-function formatCommentTitle(
-  comment: GitHubComment,
-  assignmentName: string,
-): string {
-  if (comment.path) {
-    const fileName = comment.path.split("/").pop();
-    return `💬 New feedback — ${assignmentName}\n📍 ${fileName}:${comment.line ?? "?"}`;
-  }
-  return `💬 New feedback — ${assignmentName}`;
 }
 
 export async function activate(context: vscode.ExtensionContext) {
@@ -243,7 +196,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
   const unreadStatusBarItem = vscode.window.createStatusBarItem(
     vscode.StatusBarAlignment.Right,
-    2000,
+    999,
   );
   unreadStatusBarItem.command = "classroom50-vscode-extension.checkFeedback";
   context.subscriptions.push(unreadStatusBarItem);
@@ -286,10 +239,9 @@ export async function activate(context: vscode.ExtensionContext) {
       unreadComments.push(comment);
 
       const preview = stripMarkdown(comment.body).substring(0, 100);
-      const title = formatCommentTitle(comment, config["assignment-name"]);
 
       const action = await vscode.window.showInformationMessage(
-        `${title}\n${preview}...`,
+        `💬 New feedback — ${config["assignment-name"]}\n${preview}...`,
         "View on GitHub",
         "Mark as read",
       );
@@ -313,9 +265,6 @@ export async function activate(context: vscode.ExtensionContext) {
 
     const items = unreadComments.map((c) => ({
       label: stripMarkdown(c.body).substring(0, 80),
-      description: c.path
-        ? `${c.path.split("/").pop()}:${c.line ?? "?"}`
-        : undefined,
       comment: c,
     }));
 
@@ -391,7 +340,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
   const checkStatusBarItem = vscode.window.createStatusBarItem(
     vscode.StatusBarAlignment.Right,
-    1999,
+    1000,
   );
   checkStatusBarItem.text = "$(bell) Check Feedback";
   checkStatusBarItem.tooltip = "Classroom 50: check for new feedback";
@@ -401,7 +350,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
   const openPRStatusBarItem = vscode.window.createStatusBarItem(
     vscode.StatusBarAlignment.Right,
-    1998,
+    999,
   );
   openPRStatusBarItem.text = "$(git-pull-request) Feedback PR";
   openPRStatusBarItem.tooltip = "Classroom 50: open feedback PR in browser";
@@ -415,7 +364,7 @@ export async function activate(context: vscode.ExtensionContext) {
   ) {
     const supportLinksStatusBarItem = vscode.window.createStatusBarItem(
       vscode.StatusBarAlignment.Right,
-      1997,
+      998,
     );
     supportLinksStatusBarItem.text = "$(book) Support Materials";
     supportLinksStatusBarItem.tooltip = "Classroom 50: open support materials";

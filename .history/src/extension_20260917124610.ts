@@ -243,7 +243,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
   const unreadStatusBarItem = vscode.window.createStatusBarItem(
     vscode.StatusBarAlignment.Right,
-    2000,
+    999,
   );
   unreadStatusBarItem.command = "classroom50-vscode-extension.checkFeedback";
   context.subscriptions.push(unreadStatusBarItem);
@@ -391,7 +391,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
   const checkStatusBarItem = vscode.window.createStatusBarItem(
     vscode.StatusBarAlignment.Right,
-    1999,
+    1000,
   );
   checkStatusBarItem.text = "$(bell) Check Feedback";
   checkStatusBarItem.tooltip = "Classroom 50: check for new feedback";
@@ -401,7 +401,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
   const openPRStatusBarItem = vscode.window.createStatusBarItem(
     vscode.StatusBarAlignment.Right,
-    1998,
+    998,
   );
   openPRStatusBarItem.text = "$(git-pull-request) Feedback PR";
   openPRStatusBarItem.tooltip = "Classroom 50: open feedback PR in browser";
@@ -415,7 +415,7 @@ export async function activate(context: vscode.ExtensionContext) {
   ) {
     const supportLinksStatusBarItem = vscode.window.createStatusBarItem(
       vscode.StatusBarAlignment.Right,
-      1997,
+      997,
     );
     supportLinksStatusBarItem.text = "$(book) Support Materials";
     supportLinksStatusBarItem.tooltip = "Classroom 50: open support materials";
