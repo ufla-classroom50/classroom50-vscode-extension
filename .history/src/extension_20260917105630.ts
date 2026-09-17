@@ -169,14 +169,14 @@ export async function activate(context: vscode.ExtensionContext) {
     );
     context.subscriptions.push(openPRCommand);
 
-    const checkStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 1000);
+    const checkStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
     checkStatusBarItem.text = '$(bell) Check Feedback';
     checkStatusBarItem.tooltip = 'Classroom 50: check for new feedback';
     checkStatusBarItem.command = 'classroom50-vscode-extension.checkFeedback';
     checkStatusBarItem.show();
     context.subscriptions.push(checkStatusBarItem);
 
-    const openPRStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 999);
+    const openPRStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 99);
     openPRStatusBarItem.text = '$(git-pull-request) Feedback PR';
     openPRStatusBarItem.tooltip = 'Classroom 50: open feedback PR in browser';
     openPRStatusBarItem.command = 'classroom50-vscode-extension.openFeedbackPR';

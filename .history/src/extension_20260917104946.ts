@@ -152,6 +152,7 @@ export async function activate(context: vscode.ExtensionContext) {
         }
     };
 
+    // Comando: verificar feedback manualmente
     const checkCommand = vscode.commands.registerCommand(
         'classroom50-vscode-extension.checkFeedback',
         async () => {
@@ -161,6 +162,7 @@ export async function activate(context: vscode.ExtensionContext) {
     );
     context.subscriptions.push(checkCommand);
 
+    // Comando: abrir o PR de feedback no navegador
     const openPRCommand = vscode.commands.registerCommand(
         'classroom50-vscode-extension.openFeedbackPR',
         () => {
@@ -169,14 +171,16 @@ export async function activate(context: vscode.ExtensionContext) {
     );
     context.subscriptions.push(openPRCommand);
 
-    const checkStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 1000);
+    // Status bar: verificar feedback
+    const checkStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
     checkStatusBarItem.text = '$(bell) Check Feedback';
     checkStatusBarItem.tooltip = 'Classroom 50: check for new feedback';
     checkStatusBarItem.command = 'classroom50-vscode-extension.checkFeedback';
     checkStatusBarItem.show();
     context.subscriptions.push(checkStatusBarItem);
 
-    const openPRStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 999);
+    // Status bar: abrir PR no navegador
+    const openPRStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 99);
     openPRStatusBarItem.text = '$(git-pull-request) Feedback PR';
     openPRStatusBarItem.tooltip = 'Classroom 50: open feedback PR in browser';
     openPRStatusBarItem.command = 'classroom50-vscode-extension.openFeedbackPR';
