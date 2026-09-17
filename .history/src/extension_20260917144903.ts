@@ -433,7 +433,8 @@ async function getMultilineText(
 
   try {
     fs.unlinkSync(tempFilePath);
-  } catch {}
+  } catch {
+  }
 
   if (finalText.length === 0 || finalText === placeholderText.trim()) {
     return undefined;
@@ -693,6 +694,7 @@ export async function activate(context: vscode.ExtensionContext) {
   const timer = setInterval(checkForNewComments, intervalMs);
   context.subscriptions.push({ dispose: () => clearInterval(timer) });
 
+  // Comandos exclusivos do professor
   if (isTeacher) {
     const listStudentsCommand = vscode.commands.registerCommand(
       "classroom50-vscode-extension.listStudents",

@@ -38,26 +38,17 @@ interface StudentRepo {
 const MAX_PAGES = 20;
 
 function validateConfig(data: any): string | undefined {
-  if (
-    typeof data["assignment-name"] !== "string" ||
-    data["assignment-name"].length === 0
-  ) {
-    return 'missing or invalid "assignment-name"';
+  if (typeof data["assignment-name"] !== "string" || data["assignment-name"].length === 0) {
+    return "missing or invalid \"assignment-name\"";
   }
-  if (
-    typeof data["polling-interval-minutes"] !== "number" ||
-    data["polling-interval-minutes"] <= 0
-  ) {
-    return 'missing or invalid "polling-interval-minutes"';
+  if (typeof data["polling-interval-minutes"] !== "number" || data["polling-interval-minutes"] <= 0) {
+    return "missing or invalid \"polling-interval-minutes\"";
   }
   if (!Array.isArray(data["notify-from-users"])) {
-    return 'missing or invalid "notify-from-users" (must be an array)';
+    return "missing or invalid \"notify-from-users\" (must be an array)";
   }
-  if (
-    data["support-links"] !== undefined &&
-    typeof data["support-links"] !== "object"
-  ) {
-    return 'invalid "support-links" (must be an object)';
+  if (data["support-links"] !== undefined && typeof data["support-links"] !== "object") {
+    return "invalid \"support-links\" (must be an object)";
   }
   return undefined;
 }
@@ -140,7 +131,7 @@ function parseGitRemote(): RepoInfo | undefined {
   }
 }
 
-async function getGitHubSession(): Promise<
+async function getGitHubSession(): Promise
   vscode.AuthenticationSession | undefined
 > {
   try {
@@ -433,7 +424,9 @@ async function getMultilineText(
 
   try {
     fs.unlinkSync(tempFilePath);
-  } catch {}
+  } catch {
+    // ignore cleanup errors
+  }
 
   if (finalText.length === 0 || finalText === placeholderText.trim()) {
     return undefined;
@@ -693,6 +686,7 @@ export async function activate(context: vscode.ExtensionContext) {
   const timer = setInterval(checkForNewComments, intervalMs);
   context.subscriptions.push({ dispose: () => clearInterval(timer) });
 
+  // Comandos exclusivos do professor
   if (isTeacher) {
     const listStudentsCommand = vscode.commands.registerCommand(
       "classroom50-vscode-extension.listStudents",

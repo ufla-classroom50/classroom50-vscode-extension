@@ -433,7 +433,8 @@ async function getMultilineText(
 
   try {
     fs.unlinkSync(tempFilePath);
-  } catch {}
+  } catch {
+  }
 
   if (finalText.length === 0 || finalText === placeholderText.trim()) {
     return undefined;
