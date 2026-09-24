@@ -601,9 +601,12 @@ export async function activate(context: vscode.ExtensionContext) {
 
     if (action === "View on GitHub") {
       vscode.env.openExternal(vscode.Uri.parse(selected.comment.html_url));
-      markAsRead(selected.comment.uniqueKey);
     } else if (action === "Mark as read") {
-      markAsRead(selected.comment.uniqueKey);
+      unreadComments = unreadComments.filter(
+        (c) => c.uniqueKey !== selected.comment.uniqueKey,
+      );
+      persistState();
+      updateUnreadStatusBar();
     }
   };
 

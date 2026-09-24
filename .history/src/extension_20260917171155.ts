@@ -509,12 +509,6 @@ export async function activate(context: vscode.ExtensionContext) {
     context.globalState.update(`unreadComments_${repo}`, unreadComments);
   };
 
-  const markAsRead = (uniqueKey: string) => {
-    unreadComments = unreadComments.filter((c) => c.uniqueKey !== uniqueKey);
-    persistState();
-    updateUnreadStatusBar();
-  };
-
   let isChecking = false;
 
   const checkForNewComments = async () => {
@@ -556,9 +550,10 @@ export async function activate(context: vscode.ExtensionContext) {
 
         if (action === "View on GitHub") {
           vscode.env.openExternal(vscode.Uri.parse(comment.html_url));
-          markAsRead(comment.uniqueKey);
         } else if (action === "Mark as read") {
-          markAsRead(comment.uniqueKey);
+          unreadComments = unreadComments.filter(
+            (c) => c.uniqueKey !== comment.uniqueKey,
+          );
         }
       }
 
@@ -601,9 +596,12 @@ export async function activate(context: vscode.ExtensionContext) {
 
     if (action === "View on GitHub") {
       vscode.env.openExternal(vscode.Uri.parse(selected.comment.html_url));
-      markAsRead(selected.comment.uniqueKey);
     } else if (action === "Mark as read") {
-      markAsRead(selected.comment.uniqueKey);
+      unreadComments = unreadComments.filter(
+        (c) => c.uniqueKey !== selected.comment.uniqueKey,
+      );
+      persistState();
+      updateUnreadStatusBar();
     }
   };
 
