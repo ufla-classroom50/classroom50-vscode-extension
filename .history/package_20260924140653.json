@@ -45,11 +45,6 @@
         "title": "Submit assignment",
         "category": "Classroom 50"
       }
-    ],
-    "taskDefinitions": [
-      {
-        "type": "classroom50"
-      }
     ]
   },
   "scripts": {
