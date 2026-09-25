@@ -87,6 +87,7 @@
         {
           "id": "classroom50.teacherView",
           "name": "Teacher",
+          "icon": "resources/classroom50.svg",
           "when": "classroom50.isTeacher"
         }
       ]
