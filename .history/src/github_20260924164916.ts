@@ -1,4 +1,8 @@
-import { CONFIG_REPO_NAME, FEEDBACK_PR_TITLE, MAX_PAGES } from "./constants";
+import {
+  CONFIG_REPO_NAME,
+  FEEDBACK_PR_TITLE,
+  MAX_PAGES,
+} from "./constants";
 import {
   AssignmentRef,
   GitHubComment,
@@ -111,19 +115,17 @@ async function fetchLastCommitDate(
   org: string,
   repo: string,
 ): Promise<Date | undefined> {
-  const commits = await request<
-    Array<{ commit: { author: { date: string } } }>
-  >(token, `/repos/${org}/${repo}/commits?per_page=1`);
+  const commits = await request<Array<{ commit: { author: { date: string } } }>>(
+    token,
+    `/repos/${org}/${repo}/commits?per_page=1`,
+  );
   if (!commits || commits.length === 0) {
     return undefined;
   }
   return new Date(commits[0].commit.author.date);
 }
 
-export function studentRepoPrefix(
-  classroom: string,
-  assignment: string,
-): string {
+export function studentRepoPrefix(classroom: string, assignment: string): string {
   return `${classroom.toLowerCase()}-${assignment.toLowerCase()}-`;
 }
 
@@ -174,9 +176,7 @@ async function fetchConfigFile<T>(
     return undefined;
   }
   try {
-    return JSON.parse(
-      Buffer.from(file.content, "base64").toString("utf8"),
-    ) as T;
+    return JSON.parse(Buffer.from(file.content, "base64").toString("utf8")) as T;
   } catch (err) {
     console.error(`Classroom 50: could not parse ${filePath}`, err);
     return undefined;

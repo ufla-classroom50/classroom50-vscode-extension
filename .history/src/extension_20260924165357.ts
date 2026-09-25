@@ -53,7 +53,7 @@ async function setupTeacherFeatures(
   context: vscode.ExtensionContext,
   token: string,
 ): Promise<boolean> {
-  const adminOrgs = await fetchAdminOrgs(token);
+  const adminOrgs = ["ufla-classroom50"];
   if (adminOrgs.length === 0) {
     return false;
   }
