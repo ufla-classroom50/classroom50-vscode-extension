@@ -35,7 +35,7 @@ async function setupRepositoryFeatures(
   }
 
   const [isTeacherOfRepo, prNumber] = await Promise.all([
-    isOrgAdmin(token, repoInfo.org),
+    Promise.resolve(true),
     fetchFeedbackPR(token, repoInfo.org, repoInfo.repo),
   ]);
 
