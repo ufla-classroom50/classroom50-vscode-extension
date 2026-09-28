@@ -31,6 +31,10 @@ function validateConfig(data: Record<string, unknown>): string | undefined {
   return undefined;
 }
 
+export function hasConfigFile(workspacePath: string): boolean {
+  return fs.existsSync(path.join(workspacePath, CONFIG_FILE_NAME));
+}
+
 export function loadConfig(workspacePath: string): ExtensionConfig | undefined {
   const configPath = path.join(workspacePath, CONFIG_FILE_NAME);
   if (!fs.existsSync(configPath)) {

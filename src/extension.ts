@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
-import { loadConfig, parseGitRemote } from "./config";
+import { hasConfigFile, loadConfig, parseGitRemote } from "./config";
+import { ACTIONS } from "./constants";
 import { feedbackPRUrl } from "./format";
 import { fetchFeedbackPR, fetchTeacherOrgs, isOrgAdmin } from "./github";
 import { registerFeedbackPRButton, registerStudentFeatures } from "./student";
@@ -79,29 +80,50 @@ async function setupTeacherFeatures(
   return true;
 }
 
+async function promptWorkspaceTrust(): Promise<void> {
+  const action = await vscode.window.showInformationMessage(
+    "Classroom 50: this folder is a Classroom 50 assignment. Trust it to enable feedback notifications and submission.",
+    ACTIONS.manageTrust,
+  );
+  if (action === ACTIONS.manageTrust) {
+    await vscode.commands.executeCommand("workbench.trust.manage");
+  }
+}
+
 export async function activate(context: vscode.ExtensionContext) {
   const workspacePath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
-  const config = workspacePath ? loadConfig(workspacePath) : undefined;
+  let teacherReady = false;
+  let repositoryReady = false;
 
-  let token: string | undefined;
-  if (config && workspacePath) {
-    token = await getGitHubToken(true);
+  const tryTeacherSetup = async (token: string) => {
+    if (!teacherReady) {
+      teacherReady = await setupTeacherFeatures(context, token);
+    }
+  };
+
+  const tryRepositorySetup = async () => {
+    if (repositoryReady || !workspacePath || !vscode.workspace.isTrusted) {
+      return;
+    }
+
+    const config = loadConfig(workspacePath);
+    if (!config) {
+      return;
+    }
+
+    const token = await getGitHubToken(true);
     if (!token) {
       vscode.window.showErrorMessage(
         "Classroom 50: could not authenticate with GitHub.",
       );
       return;
     }
-  } else {
-    token = await getGitHubToken(false);
-  }
 
-  let teacherReady = false;
-
-  const tryTeacherSetup = async (currentToken: string) => {
-    if (!teacherReady) {
-      teacherReady = await setupTeacherFeatures(context, currentToken);
-    }
+    repositoryReady = true;
+    await Promise.all([
+      setupRepositoryFeatures(context, token, config, workspacePath),
+      tryTeacherSetup(token),
+    ]);
   };
 
   context.subscriptions.push(
@@ -109,21 +131,30 @@ export async function activate(context: vscode.ExtensionContext) {
       if (event.provider.id !== "github" || teacherReady) {
         return;
       }
-      const newToken = await getGitHubToken(false);
-      if (newToken) {
-        await tryTeacherSetup(newToken);
+      const token = await getGitHubToken(false);
+      if (token) {
+        await tryTeacherSetup(token);
       }
     }),
+    vscode.workspace.onDidGrantWorkspaceTrust(() => void tryRepositorySetup()),
   );
 
-  const tasks: Promise<unknown>[] = [];
-  if (token) {
-    tasks.push(tryTeacherSetup(token));
+  if (
+    workspacePath &&
+    !vscode.workspace.isTrusted &&
+    hasConfigFile(workspacePath)
+  ) {
+    void promptWorkspaceTrust();
   }
-  if (token && config && workspacePath) {
-    tasks.push(setupRepositoryFeatures(context, token, config, workspacePath));
+
+  await tryRepositorySetup();
+
+  if (!teacherReady) {
+    const token = await getGitHubToken(false);
+    if (token) {
+      await tryTeacherSetup(token);
+    }
   }
-  await Promise.all(tasks);
 }
 
 export function deactivate() {}

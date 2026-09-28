@@ -1,8 +1,9 @@
 {
   "name": "classroom50-vscode-extension",
   "displayName": "Classroom 50",
-  "description": "Notifies students about new feedback comments in Classroom 50 assignments",
-  "version": "0.0.1",
+  "description": "Classroom 50 in VS Code: feedback notifications and assignment submission for students, and a sidebar for teachers to follow and message their students",
+  "version": "0.1.0",
+  "publisher": "ufla-classroom50",
   "repository": {
     "type": "git",
     "url": "https://github.com/ufla-classroom50/classroom50-vscode-extension"
@@ -16,6 +17,12 @@
   "activationEvents": [
     "onStartupFinished"
   ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": "limited",
+      "description": "In Restricted Mode, only the teacher sidebar is available. Trust the folder to enable feedback notifications, submission and the Feedback PR button."
+    }
+  },
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
@@ -87,8 +94,8 @@
         {
           "id": "classroom50.teacherView",
           "name": "Teacher",
-          "icon": "resources/classroom50.svg",
-          "when": "classroom50.isTeacher"
+          "when": "classroom50.isTeacher",
+          "icon": "resources/classroom50.svg"
         }
       ]
     },

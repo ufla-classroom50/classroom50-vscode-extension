@@ -35,6 +35,7 @@ export const ACTIONS = {
   submit: "Submit",
   installGuide: "Installation guide",
   viewAutograder: "View autograder run",
+  manageTrust: "Manage Workspace Trust",
 } as const;
 
 export const ANNOUNCEMENT_PLACEHOLDER =
