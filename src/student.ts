@@ -13,6 +13,7 @@ import {
   repoUrl,
   stripMarkdown,
 } from "./format";
+import { SyncResult, syncAfterSubmit } from "./gitsync";
 import { runSubmit } from "./submit";
 import { createStatusBarButton, openInBrowser } from "./ui";
 import { ExtensionConfig, RepoInfo, TaggedComment } from "./types";
@@ -293,12 +294,33 @@ async function submitAndScheduleCheck(
   );
   context.subscriptions.push({ dispose: () => clearTimeout(timeout) });
 
+  await reportSyncResult(await syncAfterSubmit(workspacePath));
+
   const action = await vscode.window.showInformationMessage(
     "Classroom 50: submission sent! The autograder is running — new feedback will be checked in a few minutes.",
     ACTIONS.viewAutograder,
   );
   if (action === ACTIONS.viewAutograder) {
     openInBrowser(`${repositoryUrl}/actions`);
+  }
+}
+
+async function reportSyncResult(result: SyncResult): Promise<void> {
+  switch (result.status) {
+    case "dirty":
+      vscode.window.showWarningMessage(
+        `Classroom 50: ${result.changedFiles} file(s) in your folder differ from the version you just submitted. Submit again if you want to include these changes.`,
+      );
+      break;
+    case "localCommits":
+      vscode.window.showWarningMessage(
+        `Classroom 50: your local repository has ${result.commits} commit(s) that are not in the submitted history, so it was not synchronized. Use "git pull" to integrate the submission.`,
+      );
+      break;
+    case "synced":
+    case "noUpstream":
+    case "failed":
+      break;
   }
 }
 
