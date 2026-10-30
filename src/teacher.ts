@@ -325,35 +325,39 @@ async function sendAnnouncement(
 }
 
 async function getAnnouncementText(): Promise<string | undefined> {
-  const tempFilePath = path.join(
-    os.tmpdir(),
-    `c50-announcement-${Date.now()}.md`,
-  );
-  fs.writeFileSync(tempFilePath, `${ANNOUNCEMENT_PLACEHOLDER}\n`, "utf8");
+  const tempDirPath = fs.mkdtempSync(path.join(os.tmpdir(), "c50-announcement-"));
+  const tempFilePath = path.join(tempDirPath, "announcement.md");
 
-  const doc = await vscode.workspace.openTextDocument(tempFilePath);
-  await vscode.window.showTextDocument(doc, { preview: false });
-
-  vscode.window.showInformationMessage(
-    "Write your announcement in the editor. Save the file (Ctrl+S) when you are done.",
-  );
-
-  await new Promise<void>((resolve) => {
-    const disposable = vscode.workspace.onDidSaveTextDocument((savedDoc) => {
-      if (savedDoc.uri.toString() === doc.uri.toString()) {
-        disposable.dispose();
-        resolve();
-      }
+  try {
+    fs.writeFileSync(tempFilePath, `${ANNOUNCEMENT_PLACEHOLDER}\n`, {
+      encoding: "utf8",
+      flag: "wx",
     });
-  });
 
-  const text = fs
-    .readFileSync(tempFilePath, "utf8")
-    .replace(ANNOUNCEMENT_PLACEHOLDER, "")
-    .trim();
+    const doc = await vscode.workspace.openTextDocument(tempFilePath);
+    await vscode.window.showTextDocument(doc, { preview: false });
 
-  await vscode.commands.executeCommand("workbench.action.closeActiveEditor");
-  fs.rmSync(tempFilePath, { force: true });
+    vscode.window.showInformationMessage(
+      "Write your announcement in the editor. Save the file (Ctrl+S) when you are done.",
+    );
 
-  return text.length > 0 ? text : undefined;
+    await new Promise<void>((resolve) => {
+      const disposable = vscode.workspace.onDidSaveTextDocument((savedDoc) => {
+        if (savedDoc.uri.toString() === doc.uri.toString()) {
+          disposable.dispose();
+          resolve();
+        }
+      });
+    });
+
+    const text = fs
+      .readFileSync(tempFilePath, "utf8")
+      .replace(ANNOUNCEMENT_PLACEHOLDER, "")
+      .trim();
+
+    await vscode.commands.executeCommand("workbench.action.closeActiveEditor");
+    return text.length > 0 ? text : undefined;
+  } finally {
+    fs.rmSync(tempDirPath, { recursive: true, force: true });
+  }
 }
