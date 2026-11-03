@@ -3,6 +3,7 @@ export interface ExtensionConfig {
   "polling-interval-minutes": number;
   "notify-from-users": string[];
   "support-links": Record<string, string>;
+  autograder: boolean;
 }
 
 export interface RepoInfo {

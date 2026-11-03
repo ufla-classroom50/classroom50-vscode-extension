@@ -209,6 +209,7 @@ export async function registerStudentFeatures(
           monitor,
           workspacePath,
           repoUrl(repoInfo),
+          config.autograder,
         );
       } finally {
         isSubmitting = false;
@@ -228,7 +229,9 @@ export async function registerStudentFeatures(
     context,
     STATUS_BAR_PRIORITY.submitAssignment,
     "$(cloud-upload) Submit",
-    "Classroom 50: submit your work and run the autograder",
+    config.autograder
+      ? "Classroom 50: submit your work and run the autograder"
+      : "Classroom 50: submit your work",
     COMMANDS.submitAssignment,
   );
   if (Object.keys(config["support-links"]).length > 0) {
@@ -282,9 +285,17 @@ async function submitAndScheduleCheck(
   monitor: FeedbackMonitor,
   workspacePath: string,
   repositoryUrl: string,
+  hasAutograder: boolean,
 ): Promise<void> {
   const submitted = await runSubmit(workspacePath);
   if (!submitted) {
+    return;
+  }
+
+  await reportSyncResult(await syncAfterSubmit(workspacePath));
+
+  if (!hasAutograder) {
+    vscode.window.showInformationMessage("Classroom 50: submission sent!");
     return;
   }
 
@@ -293,8 +304,6 @@ async function submitAndScheduleCheck(
     AUTOGRADER_CHECK_DELAY_MS,
   );
   context.subscriptions.push({ dispose: () => clearTimeout(timeout) });
-
-  await reportSyncResult(await syncAfterSubmit(workspacePath));
 
   const action = await vscode.window.showInformationMessage(
     "Classroom 50: submission sent! The autograder is running — new feedback will be checked in a few minutes.",

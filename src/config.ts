@@ -42,6 +42,11 @@ function validateConfig(data: Record<string, unknown>): string | undefined {
     return 'invalid "support-links" (all links must be strings)';
   }
 
+  const autograder = data["autograder"];
+  if (autograder !== undefined && typeof autograder !== "boolean") {
+    return 'invalid "autograder" (must be true or false)';
+  }
+
   return undefined;
 }
 
@@ -76,6 +81,7 @@ export function loadConfig(workspacePath: string): ExtensionConfig | undefined {
   return {
     ...(data as unknown as ExtensionConfig),
     "support-links": (data["support-links"] as Record<string, string>) ?? {},
+    autograder: (data["autograder"] as boolean | undefined) ?? false,
   };
 }
 

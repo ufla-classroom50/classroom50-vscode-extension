@@ -68,8 +68,12 @@ comentário novo, notifica o aluno em três níveis:
 - **Nível 2** — prévia do conteúdo do comentário
 - **Nível 3** — botão **View on GitHub** para abrir o comentário completo
 
-São detectados comentários gerais do PR e comentários inline, feitos em uma linha específica
-do código. Nesse caso, a notificação indica o arquivo e a linha (ex.: `📍 Main.java:42`).
+São detectados três tipos de comentário no Feedback PR:
+
+- **Comentários gerais**, feitos na conversa do PR
+- **Reviews**, o texto geral escrito ao concluir uma revisão em *Review changes*
+- **Comentários inline**, feitos em uma linha específica do código. Nesse caso, a notificação
+  indica o arquivo e a linha (ex.: `📍 Main.java:42`)
 
 Um feedback é marcado como lido quando o aluno clica em **Mark as read** ou em
 **View on GitHub**. Os feedbacks não lidos continuam disponíveis mesmo que o aluno feche a
@@ -95,8 +99,9 @@ O botão **Submit** executa o comando oficial `gh student submit` em um terminal
   autorize pelo navegador
 - **Depois do envio**, a extensão sincroniza o repositório local com a versão entregue, e o
   VS Code deixa de mostrar os arquivos como modificados
-- **Alguns minutos depois**, a extensão verifica automaticamente se há novos feedbacks do
-  autograder. O botão **View autograder run** abre a execução no GitHub
+- **Se a atividade tiver autograder** (campo `autograder` na configuração), a extensão avisa
+  que a correção está em execução e, alguns minutos depois, verifica automaticamente se há
+  novos feedbacks. O botão **View autograder run** abre a execução no GitHub
 
 A extensão avisa o aluno em duas situações:
 
@@ -188,7 +193,8 @@ atividade. Esse arquivo é copiado automaticamente para o repositório de cada a
   "support-links": {
     "Slides da aula": "https://exemplo.com/slides",
     "Documentação Java": "https://docs.oracle.com/en/java/"
-  }
+  },
+  "autograder": true
 }
 ```
 
@@ -198,6 +204,7 @@ atividade. Esse arquivo é copiado automaticamente para o repositório de cada a
 | `polling-interval-minutes` | Sim | Intervalo, em minutos, entre as verificações de novos comentários |
 | `notify-from-users` | Sim | Usuários do GitHub cujos comentários geram notificação. Se a lista estiver vazia (`[]`), qualquer comentário notifica |
 | `support-links` | Não | Materiais de apoio no formato `"nome": "link"` (apenas URLs `http://` ou `https://`) |
+| `autograder` | Não | `true` se a atividade tem correção automática. Depois do Submit, a extensão avisa que a correção está em execução e verifica os feedbacks alguns minutos depois. Padrão: `false` |
 
 A organização e o repositório não precisam ser informados: a extensão os obtém a partir do
 remote do git. Se o arquivo tiver algum campo inválido ou ausente, a extensão exibe uma

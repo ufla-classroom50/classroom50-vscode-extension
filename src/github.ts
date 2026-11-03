@@ -76,10 +76,12 @@ async function fetchCommentsFrom(
   keyPrefix: string,
 ): Promise<TaggedComment[]> {
   const comments = await request<GitHubComment[]>(token, path);
-  return (comments ?? []).map((c) => ({
-    ...c,
-    uniqueKey: `${keyPrefix}-${c.id}`,
-  }));
+  return (comments ?? [])
+    .filter((c) => (c.body ?? "").trim().length > 0)
+    .map((c) => ({
+      ...c,
+      uniqueKey: `${keyPrefix}-${c.id}`,
+    }));
 }
 
 export async function fetchAllComments(
@@ -88,7 +90,7 @@ export async function fetchAllComments(
   repo: string,
   prNumber: number,
 ): Promise<TaggedComment[]> {
-  const [issueComments, reviewComments] = await Promise.all([
+  const [issueComments, reviewComments, reviews] = await Promise.all([
     fetchCommentsFrom(
       token,
       `/repos/${org}/${repo}/issues/${prNumber}/comments?per_page=100`,
@@ -99,8 +101,13 @@ export async function fetchAllComments(
       `/repos/${org}/${repo}/pulls/${prNumber}/comments?per_page=100`,
       "review",
     ),
+    fetchCommentsFrom(
+      token,
+      `/repos/${org}/${repo}/pulls/${prNumber}/reviews?per_page=100`,
+      "pr-review",
+    ),
   ]);
-  return [...issueComments, ...reviewComments];
+  return [...issueComments, ...reviewComments, ...reviews];
 }
 
 async function fetchOrgRepos(
