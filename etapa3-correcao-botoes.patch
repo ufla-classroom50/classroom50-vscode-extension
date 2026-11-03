@@ -1,0 +1,71 @@
+--- a/src/studentView.ts
++++ b/src/studentView.ts
+@@ -136,6 +136,15 @@
+   }
+ }
+ 
++function toAssignment(
++  arg: StudentAssignment | StudentNode | undefined,
++): StudentAssignment | undefined {
++  if (arg && "kind" in arg) {
++    return arg.kind === "assignment" ? arg.assignment : undefined;
++  }
++  return arg;
++}
++
+ function classroomKey(classroom: StudentClassroom): string {
+   return `${classroom.org}/${classroom.classroom}`;
+ }
+@@ -221,10 +230,13 @@
+       } catch (err) {
+         const stderr = (err as { stderr?: string }).stderr?.trim();
+         console.error("Classroom 50: gh student accept failed", err);
++        const needsLogin = !stderr || /auth|login|token/i.test(stderr);
+         vscode.window.showErrorMessage(
+           `Classroom 50: could not accept ${assignment.name}.` +
+             (stderr ? ` ${stderr.split("\n").pop()}` : "") +
+-            ' If you have never used the GitHub CLI, run "gh auth login" in a terminal first.',
++            (needsLogin
++              ? ' If you have never used the GitHub CLI, run "gh auth login" in a terminal first.'
++              : ""),
+         );
+         return false;
+       }
+@@ -302,8 +314,9 @@
+     ),
+     vscode.commands.registerCommand(
+       COMMANDS.acceptAssignment,
+-      async (assignment: StudentAssignment) => {
+-        if (!(await acceptRepo(assignment))) {
++      async (arg: StudentAssignment | StudentNode) => {
++        const assignment = toAssignment(arg);
++        if (!assignment || !(await acceptRepo(assignment))) {
+           return;
+         }
+         updateState(assignment, "accepted");
+@@ -315,8 +328,9 @@
+     ),
+     vscode.commands.registerCommand(
+       COMMANDS.cloneAssignment,
+-      async (assignment: StudentAssignment) => {
+-        if (await cloneRepo(assignment)) {
++      async (arg: StudentAssignment | StudentNode) => {
++        const assignment = toAssignment(arg);
++        if (assignment && (await cloneRepo(assignment))) {
+           updateState(assignment, "cloned");
+           await openRepo(assignment);
+         }
+@@ -324,7 +338,12 @@
+     ),
+     vscode.commands.registerCommand(
+       COMMANDS.openAssignment,
+-      (assignment: StudentAssignment) => openRepo(assignment),
++      async (arg: StudentAssignment | StudentNode) => {
++        const assignment = toAssignment(arg);
++        if (assignment) {
++          await openRepo(assignment);
++        }
++      },
+     ),
+   );
+ 
