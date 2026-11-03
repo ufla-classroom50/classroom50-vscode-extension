@@ -49,15 +49,28 @@ comentários inline do professor aparecem diretamente nas linhas do código, den
 
 ### Primeiros passos
 
-1. Aceite a atividade com `gh student accept <organização> <turma> <atividade>`
-2. Clone o repositório com o comando `git clone` exibido ao final do `accept`
-3. No VS Code, use **File → Open Folder** e abra **a própria pasta do repositório**
-   (e não uma pasta que o contenha)
-4. Se o VS Code perguntar se você confia nos autores da pasta, escolha **Yes, I trust the authors**
-5. Na primeira vez, a extensão pede login no GitHub: autorize com a sua conta
+1. Clique no ícone **Classroom 50** na barra lateral esquerda e em **Sign in with GitHub**
+2. A aba **Assignments** lista suas organizações, turmas e atividades. Em cada atividade:
+   - **Accept** (✓): aceita a atividade, clona o repositório e abre a pasta
+   - **Clone** (☁): para atividades já aceitas, clona o repositório e abre a pasta
+   - **Open** (📂): abre a pasta de uma atividade já clonada
+3. Se o VS Code perguntar se você confia nos autores da pasta, escolha **Yes, I trust the authors**
 
-A extensão só é ativada em repositórios de atividades do Classroom 50, identificados pelo arquivo
-`.c50extension.json`. Em qualquer outro projeto ela não exibe botões, mensagens nem pedidos de login.
+Os repositórios são clonados em `~/classroom50/<organização>/`. O botão ⟳ no topo da aba
+atualiza a lista.
+
+As turmas aparecem depois que o professor cadastra o aluno e o aluno aceita o convite da
+organização no GitHub. O aceite de atividades usa o `gh student accept`, então exige o
+GitHub CLI com a extensão `gh-student` (veja os requisitos). Na primeira vez, rode
+`gh auth login` em um terminal.
+
+Também é possível aceitar e clonar pelo terminal, com `gh student accept <organização> <turma>
+<atividade>` e o `git clone` exibido ao final. Nesse caso, abra no VS Code **a própria pasta do
+repositório** (e não uma pasta que o contenha).
+
+Os recursos de notificação e entrega só são ativados em repositórios de atividades do
+Classroom 50, identificados pelo arquivo `.c50extension.json`. Em qualquer outro projeto a
+extensão não exibe botões, mensagens nem pedidos de login.
 
 ### Notificações de feedback
 
@@ -247,6 +260,7 @@ O comando gera o arquivo `classroom50-vscode-extension-<versão>.vsix` na raiz d
 | `student.ts` | Monitoramento de feedback, notificações e botões do aluno |
 | `submit.ts` | Execução do `gh student submit` como Task do VS Code |
 | `gitsync.ts` | Sincronização do repositório local após o submit |
+| `studentView.ts` | Aba lateral do aluno: turmas, atividades, aceite, clonagem e abertura |
 | `teacher.ts` | Guia lateral do professor, abertura de repositórios e envio de avisos |
 | `github.ts` | Chamadas à GitHub REST API |
 | `config.ts` | Leitura e validação do `.c50extension.json` e do remote do git |

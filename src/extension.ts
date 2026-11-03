@@ -4,6 +4,7 @@ import { ACTIONS } from "./constants";
 import { feedbackPRUrl } from "./format";
 import { fetchFeedbackPR, fetchTeacherOrgs, isOrgAdmin } from "./github";
 import { registerFeedbackPRButton, registerStudentFeatures } from "./student";
+import { registerStudentView } from "./studentView";
 import { registerTeacherFeatures } from "./teacher";
 import { ExtensionConfig } from "./types";
 
@@ -126,9 +127,15 @@ export async function activate(context: vscode.ExtensionContext) {
     ]);
   };
 
+  const reloadStudentView = registerStudentView(context, getGitHubToken);
+
   context.subscriptions.push(
     vscode.authentication.onDidChangeSessions(async (event) => {
-      if (event.provider.id !== "github" || teacherReady) {
+      if (event.provider.id !== "github") {
+        return;
+      }
+      void reloadStudentView();
+      if (teacherReady) {
         return;
       }
       const token = await getGitHubToken(false);
@@ -147,6 +154,7 @@ export async function activate(context: vscode.ExtensionContext) {
     void promptWorkspaceTrust();
   }
 
+  void reloadStudentView();
   await tryRepositorySetup();
 
   if (!teacherReady) {

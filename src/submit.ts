@@ -30,15 +30,22 @@ function waitForTaskExit(): Promise<number | undefined> {
   });
 }
 
+export async function ensureStudentCli(purpose: string): Promise<boolean> {
+  if (await isStudentCliInstalled()) {
+    return true;
+  }
+  const action = await vscode.window.showErrorMessage(
+    `Classroom 50: ${purpose} requires the GitHub CLI (gh) with the gh-student extension.`,
+    ACTIONS.installGuide,
+  );
+  if (action === ACTIONS.installGuide) {
+    openInBrowser(STUDENT_CLI_INSTALL_URL);
+  }
+  return false;
+}
+
 export async function runSubmit(workspacePath: string): Promise<boolean> {
-  if (!(await isStudentCliInstalled())) {
-    const action = await vscode.window.showErrorMessage(
-      "Classroom 50: submitting requires the GitHub CLI (gh) with the gh-student extension.",
-      ACTIONS.installGuide,
-    );
-    if (action === ACTIONS.installGuide) {
-      openInBrowser(STUDENT_CLI_INSTALL_URL);
-    }
+  if (!(await ensureStudentCli("submitting"))) {
     return false;
   }
 

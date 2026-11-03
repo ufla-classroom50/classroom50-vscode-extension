@@ -78,6 +78,35 @@
         "command": "classroom50-vscode-extension.openStudentRepo",
         "title": "Open student repository",
         "category": "Classroom 50"
+      },
+      {
+        "command": "classroom50-vscode-extension.signIn",
+        "title": "Sign in with GitHub",
+        "category": "Classroom 50"
+      },
+      {
+        "command": "classroom50-vscode-extension.refreshAssignments",
+        "title": "Refresh assignments",
+        "category": "Classroom 50",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "classroom50-vscode-extension.acceptAssignment",
+        "title": "Accept assignment",
+        "category": "Classroom 50",
+        "icon": "$(check)"
+      },
+      {
+        "command": "classroom50-vscode-extension.cloneAssignment",
+        "title": "Clone assignment",
+        "category": "Classroom 50",
+        "icon": "$(cloud-download)"
+      },
+      {
+        "command": "classroom50-vscode-extension.openAssignment",
+        "title": "Open assignment",
+        "category": "Classroom 50",
+        "icon": "$(folder-opened)"
       }
     ],
     "viewsContainers": {
@@ -91,6 +120,12 @@
     },
     "views": {
       "classroom50": [
+        {
+          "id": "classroom50.studentView",
+          "name": "Assignments",
+          "when": "!classroom50.signedIn || classroom50.isStudent || !classroom50.isTeacher",
+          "icon": "resources/classroom50.svg"
+        },
         {
           "id": "classroom50.teacherView",
           "name": "Teacher",
@@ -115,6 +150,11 @@
           "command": "classroom50-vscode-extension.sendAnnouncement",
           "when": "view == classroom50.teacherView",
           "group": "navigation@3"
+        },
+        {
+          "command": "classroom50-vscode-extension.refreshAssignments",
+          "when": "view == classroom50.studentView && classroom50.signedIn",
+          "group": "navigation@1"
         }
       ],
       "commandPalette": [
@@ -157,12 +197,52 @@
         {
           "command": "classroom50-vscode-extension.openStudentRepo",
           "when": "false"
+        },
+        {
+          "command": "classroom50-vscode-extension.acceptAssignment",
+          "when": "false"
+        },
+        {
+          "command": "classroom50-vscode-extension.cloneAssignment",
+          "when": "false"
+        },
+        {
+          "command": "classroom50-vscode-extension.openAssignment",
+          "when": "false"
+        },
+        {
+          "command": "classroom50-vscode-extension.refreshAssignments",
+          "when": "classroom50.signedIn"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "classroom50-vscode-extension.acceptAssignment",
+          "when": "view == classroom50.studentView && viewItem == assignment.notAccepted",
+          "group": "inline"
+        },
+        {
+          "command": "classroom50-vscode-extension.cloneAssignment",
+          "when": "view == classroom50.studentView && viewItem == assignment.accepted",
+          "group": "inline"
+        },
+        {
+          "command": "classroom50-vscode-extension.openAssignment",
+          "when": "view == classroom50.studentView && viewItem == assignment.cloned",
+          "group": "inline"
         }
       ]
     },
     "taskDefinitions": [
       {
         "type": "classroom50"
+      }
+    ],
+    "viewsWelcome": [
+      {
+        "view": "classroom50.studentView",
+        "contents": "Sign in with GitHub to see your classrooms and assignments.\n[Sign in with GitHub](command:classroom50-vscode-extension.signIn)",
+        "when": "!classroom50.signedIn"
       }
     ]
   },

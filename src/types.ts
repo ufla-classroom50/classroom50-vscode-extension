@@ -36,3 +36,10 @@ export interface AssignmentRef {
   slug: string;
   name: string;
 }
+
+export interface StudentClassroom {
+  org: string;
+  classroom: string;
+  classroomName: string;
+  assignments: Array<{ slug: string; name: string }>;
+}

@@ -2,6 +2,7 @@ import { CONFIG_REPO_NAME, FEEDBACK_PR_TITLE, MAX_PAGES } from "./constants";
 import {
   AssignmentRef,
   GitHubComment,
+  StudentClassroom,
   StudentRepo,
   TaggedComment,
 } from "./types";
@@ -278,4 +279,82 @@ export async function postComment(
     { method: "POST", body: { body } },
   );
   return created !== undefined;
+}
+
+export async function fetchUserLogin(
+  token: string,
+): Promise<string | undefined> {
+  const user = await request<{ login: string }>(token, "/user");
+  return user?.login;
+}
+
+export async function repoExists(
+  token: string,
+  org: string,
+  repo: string,
+): Promise<boolean> {
+  const found = await request<{ id: number }>(token, `/repos/${org}/${repo}`, {
+    notFoundIsExpected: true,
+  });
+  return found !== undefined;
+}
+
+async function fetchPublishedConfig<T>(
+  org: string,
+  filePath: string,
+): Promise<T | undefined> {
+  const url = `https://${org.toLowerCase()}.github.io/${CONFIG_REPO_NAME}/${filePath}`;
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      return undefined;
+    }
+    return (await response.json()) as T;
+  } catch (err) {
+    console.error(`Classroom 50: GET ${url} failed`, err);
+    return undefined;
+  }
+}
+
+export async function fetchStudentClassrooms(
+  token: string,
+): Promise<StudentClassroom[]> {
+  const teams = await request<
+    Array<{ slug: string; organization: { login: string } }>
+  >(token, "/user/teams?per_page=100");
+  const teamPrefix = `${CONFIG_REPO_NAME}-`;
+  const candidates = (teams ?? []).filter((t) => t.slug.startsWith(teamPrefix));
+
+  const classrooms = await Promise.all(
+    candidates.map(async (team) => {
+      const org = team.organization.login;
+      const classroom = team.slug.slice(teamPrefix.length);
+      const manifest = await fetchPublishedConfig<{
+        assignments?: Array<{ slug: string; name: string; mode?: string }>;
+      }>(org, `${classroom}/assignments.json`);
+      if (!manifest) {
+        return undefined;
+      }
+      const info = await fetchPublishedConfig<{ name?: string }>(
+        org,
+        `${classroom}/classroom.json`,
+      );
+      return {
+        org,
+        classroom,
+        classroomName: info?.name ?? classroom,
+        assignments: (manifest.assignments ?? [])
+          .filter((a) => (a.mode ?? "individual") === "individual")
+          .map((a) => ({ slug: a.slug, name: a.name })),
+      };
+    }),
+  );
+
+  return classrooms
+    .filter((c): c is StudentClassroom => c !== undefined)
+    .sort(
+      (a, b) =>
+        a.org.localeCompare(b.org) ||
+        a.classroomName.localeCompare(b.classroomName),
+    );
 }
