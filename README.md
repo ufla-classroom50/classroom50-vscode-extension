@@ -197,7 +197,7 @@ atividade. Esse arquivo é copiado automaticamente para o repositório de cada a
 | `assignment-name` | Sim | Nome da atividade exibido nas notificações |
 | `polling-interval-minutes` | Sim | Intervalo, em minutos, entre as verificações de novos comentários |
 | `notify-from-users` | Sim | Usuários do GitHub cujos comentários geram notificação. Se a lista estiver vazia (`[]`), qualquer comentário notifica |
-| `support-links` | Não | Materiais de apoio no formato `"nome": "link"` |
+| `support-links` | Não | Materiais de apoio no formato `"nome": "link"` (apenas URLs `http://` ou `https://`) |
 
 A organização e o repositório não precisam ser informados: a extensão os obtém a partir do
 remote do git. Se o arquivo tiver algum campo inválido ou ausente, a extensão exibe uma

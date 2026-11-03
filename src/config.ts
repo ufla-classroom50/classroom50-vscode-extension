@@ -12,11 +12,19 @@ function validateConfig(data: Record<string, unknown>): string | undefined {
   }
 
   const pollingInterval = data["polling-interval-minutes"];
-  if (typeof pollingInterval !== "number" || pollingInterval <= 0) {
+  if (
+    typeof pollingInterval !== "number" ||
+    !Number.isFinite(pollingInterval) ||
+    pollingInterval <= 0
+  ) {
     return 'missing or invalid "polling-interval-minutes"';
   }
 
-  if (!Array.isArray(data["notify-from-users"])) {
+  const notifyFromUsers = data["notify-from-users"];
+  if (
+    !Array.isArray(notifyFromUsers) ||
+    !notifyFromUsers.every((user) => typeof user === "string")
+  ) {
     return 'missing or invalid "notify-from-users" (must be an array)';
   }
 
@@ -26,6 +34,12 @@ function validateConfig(data: Record<string, unknown>): string | undefined {
     (typeof supportLinks !== "object" || supportLinks === null)
   ) {
     return 'invalid "support-links" (must be an object)';
+  }
+  if (
+    supportLinks !== undefined &&
+    !Object.values(supportLinks).every((link) => typeof link === "string")
+  ) {
+    return 'invalid "support-links" (all links must be strings)';
   }
 
   return undefined;
