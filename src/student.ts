@@ -12,6 +12,7 @@ import { fetchFeedback } from "./github";
 import { feedbackPRUrl, formatFeedbackMessage, repoUrl } from "./format";
 import { SyncResult, syncAfterSubmit } from "./gitsync";
 import { setFeedbackBadge } from "./studentView";
+import { SupportPanel } from "./supportPanel";
 import { runSubmit } from "./submit";
 import { createStatusBarButton, openInBrowser } from "./ui";
 import { ExtensionConfig, Feedback, RepoInfo } from "./types";
@@ -280,6 +281,11 @@ export async function registerStudentFeatures(
     prNumber,
     workspacePath,
   );
+  const supportPanel = new SupportPanel(
+    `Support materials — ${config["assignment-name"]}`,
+    config["support-links"],
+  );
+  context.subscriptions.push({ dispose: () => supportPanel.dispose() });
   let isSubmitting = false;
 
   context.subscriptions.push(
@@ -297,9 +303,15 @@ export async function registerStudentFeatures(
     vscode.commands.registerCommand(COMMANDS.openFeedback, () =>
       monitor.openPanel(),
     ),
-    vscode.commands.registerCommand(COMMANDS.openSupportLinks, () =>
-      pickSupportLink(config["support-links"]),
-    ),
+    vscode.commands.registerCommand(COMMANDS.openSupportLinks, () => {
+      if (Object.keys(config["support-links"]).length === 0) {
+        vscode.window.showInformationMessage(
+          "Classroom 50: no support materials configured.",
+        );
+        return;
+      }
+      supportPanel.show();
+    }),
     vscode.commands.registerCommand(COMMANDS.submitAssignment, async () => {
       if (isSubmitting) {
         return;
@@ -432,22 +444,5 @@ async function reportSyncResult(result: SyncResult): Promise<void> {
     case "noUpstream":
     case "failed":
       break;
-  }
-}
-
-async function pickSupportLink(links: Record<string, string>): Promise<void> {
-  const names = Object.keys(links);
-  if (names.length === 0) {
-    vscode.window.showInformationMessage(
-      "Classroom 50: no support links configured.",
-    );
-    return;
-  }
-
-  const selected = await vscode.window.showQuickPick(names, {
-    placeHolder: "Select a support material to open",
-  });
-  if (selected) {
-    openInBrowser(links[selected]);
   }
 }

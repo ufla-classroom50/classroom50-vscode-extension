@@ -107,7 +107,7 @@ disponíveis mesmo que o aluno feche a notificação ou reinicie o VS Code.
 | 🔔 **Check Feedback** | Verifica agora, sem esperar o intervalo configurado |
 | **Feedback PR** | Abre o Feedback Pull Request no navegador |
 | ☁️ **Submit** | Entrega a atividade |
-| 📖 **Support Materials** | Abre os materiais de apoio configurados pelo professor (aparece só se houver algum) |
+| 📖 **Support Materials** | Abre um painel com os materiais de apoio configurados pelo professor; cada material abre no navegador (aparece só se houver algum) |
 
 ### Entrega da atividade (Submit)
 
@@ -264,6 +264,8 @@ O comando gera o arquivo `classroom50-vscode-extension-<versão>.vsix` na raiz d
 | Arquivo | Responsabilidade |
 |---|---|
 | `extension.ts` | Ponto de entrada: autenticação, confiança da pasta e ativação dos recursos de aluno e professor |
+| `supportPanel.ts` | Painel dos materiais de apoio |
+| `webview.ts` | Estrutura comum dos painéis: estilos, política de segurança e cliques |
 | `feedbackPanel.ts` | Painel de feedback (Webview) com os feedbacks lidos e não lidos |
 | `student.ts` | Monitoramento de feedback, notificações e botões do aluno |
 | `submit.ts` | Execução do `gh student submit` como Task do VS Code |
