@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import { formatInlineLocation } from "./format";
+import { locale, t } from "./i18n";
 import { Feedback } from "./types";
 import { buildWebviewPage, escapeHtml } from "./webview";
 
@@ -37,7 +38,7 @@ function formatDate(isoDate: string): string {
   const date = new Date(isoDate);
   return Number.isNaN(date.getTime())
     ? ""
-    : date.toLocaleString(vscode.env.language);
+    : date.toLocaleString(locale());
 }
 
 export class FeedbackPanel {
@@ -137,7 +138,7 @@ export class FeedbackPanel {
             <li>
               <div class="inline-head">
                 <a href="#" data-action="openFile" data-key="${key}" data-index="${index}"
-                   title="Open in the editor">📍 ${escapeHtml(formatInlineLocation(comment))}</a>
+                   title="${escapeHtml(t("Open in the editor"))}">📍 ${escapeHtml(formatInlineLocation(comment))}</a>
                 <a href="#" class="muted" data-action="openUrl" data-key="${key}" data-index="${index}">GitHub ↗</a>
               </div>
               <div class="inline-body">${await this.rendered(comment.body)}</div>
@@ -146,13 +147,13 @@ export class FeedbackPanel {
       );
       inline = `
         <div class="inline">
-          <div class="inline-title">Inline comments (${item.inline.length})</div>
+          <div class="inline-title">${escapeHtml(t("Inline comments ({0})", item.inline.length))}</div>
           <ul>${entries.join("")}</ul>
         </div>`;
     }
 
     const markButton = isUnread
-      ? `<button data-action="markRead" data-key="${key}">Mark as read</button>`
+      ? `<button data-action="markRead" data-key="${key}">${escapeHtml(t("Mark as read"))}</button>`
       : "";
 
     return `
@@ -163,13 +164,13 @@ export class FeedbackPanel {
             <strong>@${escapeHtml(item.author)}</strong>
             <span class="date">${escapeHtml(formatDate(item.createdAt))}</span>
           </div>
-          ${isUnread ? `<span class="tag">New</span>` : ""}
+          ${isUnread ? `<span class="tag">${escapeHtml(t("New"))}</span>` : ""}
         </header>
         ${body}
         ${inline}
         <footer>
           ${markButton}
-          <button class="secondary" data-action="openUrl" data-key="${key}">View on GitHub</button>
+          <button class="secondary" data-action="openUrl" data-key="${key}">${escapeHtml(t("View on GitHub"))}</button>
         </footer>
       </article>`;
   }
@@ -191,14 +192,14 @@ export class FeedbackPanel {
     const unreadSection =
       unread.length > 0
         ? unreadCards
-        : `<p class="empty">No unread feedback.</p>`;
+        : `<p class="empty">${escapeHtml(t("No unread feedback."))}</p>`;
     const readSection =
       read.length > 0
-        ? `<details class="read-section"><summary>Read (${read.length})</summary>${readCards}</details>`
+        ? `<details class="read-section"><summary>${escapeHtml(t("Read ({0})", read.length))}</summary>${readCards}</details>`
         : "";
     const markAll =
       unread.length > 1
-        ? `<button class="secondary" data-action="markAllRead">Mark all as read</button>`
+        ? `<button class="secondary" data-action="markAllRead">${escapeHtml(t("Mark all as read"))}</button>`
         : "";
 
     const styles = `
@@ -231,7 +232,7 @@ export class FeedbackPanel {
       styles,
       `  <h1>${escapeHtml(this.title)}</h1>
   <div class="summary">
-    <span>${unread.length} unread · ${feedback.length} total</span>
+    <span>${escapeHtml(t("{0} unread · {1} total", unread.length, feedback.length))}</span>
     ${markAll}
   </div>
   ${unreadSection}

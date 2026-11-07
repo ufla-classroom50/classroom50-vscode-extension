@@ -4,11 +4,12 @@ import * as path from "path";
 import { execFileSync } from "child_process";
 import { CONFIG_FILE_NAME } from "./constants";
 import { ExtensionConfig, RepoInfo } from "./types";
+import { t } from "./i18n";
 
 function validateConfig(data: Record<string, unknown>): string | undefined {
   const assignmentName = data["assignment-name"];
   if (typeof assignmentName !== "string" || assignmentName.length === 0) {
-    return 'missing or invalid "assignment-name"';
+    return t('missing or invalid "assignment-name"');
   }
 
   const pollingInterval = data["polling-interval-minutes"];
@@ -17,7 +18,7 @@ function validateConfig(data: Record<string, unknown>): string | undefined {
     !Number.isFinite(pollingInterval) ||
     pollingInterval <= 0
   ) {
-    return 'missing or invalid "polling-interval-minutes"';
+    return t('missing or invalid "polling-interval-minutes"');
   }
 
   const notifyFromUsers = data["notify-from-users"];
@@ -25,7 +26,7 @@ function validateConfig(data: Record<string, unknown>): string | undefined {
     !Array.isArray(notifyFromUsers) ||
     !notifyFromUsers.every((user) => typeof user === "string")
   ) {
-    return 'missing or invalid "notify-from-users" (must be an array)';
+    return t('missing or invalid "notify-from-users" (must be an array)');
   }
 
   const supportLinks = data["support-links"];
@@ -33,18 +34,18 @@ function validateConfig(data: Record<string, unknown>): string | undefined {
     supportLinks !== undefined &&
     (typeof supportLinks !== "object" || supportLinks === null)
   ) {
-    return 'invalid "support-links" (must be an object)';
+    return t('invalid "support-links" (must be an object)');
   }
   if (
     supportLinks !== undefined &&
     !Object.values(supportLinks).every((link) => typeof link === "string")
   ) {
-    return 'invalid "support-links" (all links must be strings)';
+    return t('invalid "support-links" (all links must be strings)');
   }
 
   const autograder = data["autograder"];
   if (autograder !== undefined && typeof autograder !== "boolean") {
-    return 'invalid "autograder" (must be true or false)';
+    return t('invalid "autograder" (must be true or false)');
   }
 
   return undefined;
@@ -65,7 +66,7 @@ export function loadConfig(workspacePath: string): ExtensionConfig | undefined {
     data = JSON.parse(fs.readFileSync(configPath, "utf8"));
   } catch {
     vscode.window.showErrorMessage(
-      `Classroom 50: ${CONFIG_FILE_NAME} file is invalid JSON.`,
+      t("Classroom 50: {0} file is invalid JSON.", CONFIG_FILE_NAME),
     );
     return undefined;
   }
@@ -73,7 +74,7 @@ export function loadConfig(workspacePath: string): ExtensionConfig | undefined {
   const validationError = validateConfig(data);
   if (validationError) {
     vscode.window.showErrorMessage(
-      `Classroom 50: ${CONFIG_FILE_NAME} is invalid — ${validationError}.`,
+      t("Classroom 50: {0} is invalid — {1}.", CONFIG_FILE_NAME, validationError),
     );
     return undefined;
   }
@@ -95,7 +96,7 @@ export function parseGitRemote(workspacePath: string): RepoInfo | undefined {
       .trim();
   } catch {
     vscode.window.showErrorMessage(
-      "Classroom 50: open folder is not a git repository.",
+      t("Classroom 50: open folder is not a git repository."),
     );
     return undefined;
   }
@@ -106,7 +107,7 @@ export function parseGitRemote(workspacePath: string): RepoInfo | undefined {
 
   if (!match) {
     vscode.window.showErrorMessage(
-      "Classroom 50: could not identify the GitHub repository.",
+      t("Classroom 50: could not identify the GitHub repository."),
     );
     return undefined;
   }

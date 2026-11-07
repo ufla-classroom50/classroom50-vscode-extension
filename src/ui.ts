@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import { t } from "./i18n";
 
 export function createStatusBarButton(
   context: vscode.ExtensionContext,
@@ -25,7 +26,7 @@ export function openInBrowser(url: string): void {
     uri = vscode.Uri.parse(url, true);
   } catch {
     vscode.window.showWarningMessage(
-      "Classroom 50: could not open link because the URL is invalid.",
+      t("Classroom 50: could not open link because the URL is invalid."),
     );
     return;
   }
@@ -33,7 +34,7 @@ export function openInBrowser(url: string): void {
   const scheme = uri.scheme.toLowerCase();
   if (scheme !== "http" && scheme !== "https") {
     vscode.window.showWarningMessage(
-      "Classroom 50: only http(s) links are allowed.",
+      t("Classroom 50: only http(s) links are allowed."),
     );
     return;
   }

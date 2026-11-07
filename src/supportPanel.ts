@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import { t } from "./i18n";
 import { openInBrowser } from "./ui";
 import { buildWebviewPage, escapeHtml } from "./webview";
 
@@ -73,7 +74,7 @@ export class SupportPanel {
           <strong>${escapeHtml(name)}</strong>
           <span class="host">${escapeHtml(hostOf(url))}</span>
         </div>
-        <button class="secondary" data-action="openLink" data-index="${index}">Open ↗</button>
+        <button class="secondary" data-action="openLink" data-index="${index}">${escapeHtml(t("Open"))} ↗</button>
       </article>`,
       )
       .join("");
@@ -89,7 +90,7 @@ export class SupportPanel {
     return buildWebviewPage(
       styles,
       `  <h1>${escapeHtml(this.title)}</h1>
-  <div class="summary"><span>${this.entries.length} material(s) — opens in your browser</span></div>
+  <div class="summary"><span>${escapeHtml(t("{0} material(s) — opens in your browser", this.entries.length))}</span></div>
   ${cards}`,
     );
   }

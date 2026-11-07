@@ -16,6 +16,7 @@ import { SupportPanel } from "./supportPanel";
 import { runSubmit } from "./submit";
 import { createStatusBarButton, openInBrowser } from "./ui";
 import { ExtensionConfig, Feedback, RepoInfo } from "./types";
+import { t } from "./i18n";
 
 const MAX_INDIVIDUAL_TOASTS = 3;
 
@@ -46,7 +47,7 @@ class FeedbackMonitor {
         .map((c) => c.uniqueKey),
     );
 
-    this.panel = new FeedbackPanel(`Feedback — ${config["assignment-name"]}`, {
+    this.panel = new FeedbackPanel(t("Feedback — {0}", config["assignment-name"]), {
       markAsRead: (key) => this.markAsRead(key),
       markAllAsRead: () => this.markAllAsRead(),
       openOnGitHub: (key, index) => this.openOnGitHub(key, index),
@@ -139,7 +140,11 @@ class FeedbackMonitor {
     if (newFeedback.length > MAX_INDIVIDUAL_TOASTS) {
       void this.promptAction(
         undefined,
-        `💬 ${newFeedback.length} new feedback items — ${this.config["assignment-name"]}`,
+        t(
+          "💬 {0} new feedback items — {1}",
+          newFeedback.length,
+          this.config["assignment-name"],
+        ),
       );
       return;
     }
@@ -155,18 +160,18 @@ class FeedbackMonitor {
     item: Feedback | undefined,
     message: string,
   ): Promise<void> {
-    const actions: string[] = [ACTIONS.openFeedback];
+    const actions: string[] = [t(ACTIONS.openFeedback)];
     if (item) {
-      actions.push(ACTIONS.viewOnGitHub);
+      actions.push(t(ACTIONS.viewOnGitHub));
     }
     const action = await vscode.window.showInformationMessage(
       message,
       ...actions,
     );
 
-    if (action === ACTIONS.openFeedback) {
+    if (action === t(ACTIONS.openFeedback)) {
       await this.openPanel();
-    } else if (action === ACTIONS.viewOnGitHub && item) {
+    } else if (action === t(ACTIONS.viewOnGitHub) && item) {
       this.openOnGitHub(item.key);
     }
   }
@@ -197,7 +202,7 @@ class FeedbackMonitor {
     const filePath = path.resolve(root, comment.path);
     if (!filePath.startsWith(root + path.sep) || !fs.existsSync(filePath)) {
       vscode.window.showWarningMessage(
-        `Classroom 50: ${comment.path} was not found in this folder.`,
+        t("Classroom 50: {0} was not found in this folder.", comment.path),
       );
       return;
     }
@@ -242,13 +247,13 @@ class FeedbackMonitor {
     const count = this.unreadKeys.size;
     if (count > 0) {
       this.feedbackItem.text = `$(mail) ${count}`;
-      this.feedbackItem.tooltip = `Classroom 50: ${count} unread feedback — click to open`;
+      this.feedbackItem.tooltip = t("Classroom 50: {0} unread feedback — click to open", count);
       this.feedbackItem.backgroundColor = new vscode.ThemeColor(
         "statusBarItem.warningBackground",
       );
     } else {
       this.feedbackItem.text = "$(mail)";
-      this.feedbackItem.tooltip = "Classroom 50: open feedback";
+      this.feedbackItem.tooltip = t("Classroom 50: open feedback");
       this.feedbackItem.backgroundColor = undefined;
     }
     setFeedbackBadge(count);
@@ -282,7 +287,7 @@ export async function registerStudentFeatures(
     workspacePath,
   );
   const supportPanel = new SupportPanel(
-    `Support materials — ${config["assignment-name"]}`,
+    t("Support materials — {0}", config["assignment-name"]),
     config["support-links"],
   );
   context.subscriptions.push({ dispose: () => supportPanel.dispose() });
@@ -297,7 +302,7 @@ export async function registerStudentFeatures(
       if (monitor.unreadCount > 0) {
         await monitor.openPanel();
       } else {
-        vscode.window.showInformationMessage("Classroom 50: no new feedback.");
+        vscode.window.showInformationMessage(t("Classroom 50: no new feedback."));
       }
     }),
     vscode.commands.registerCommand(COMMANDS.openFeedback, () =>
@@ -306,7 +311,7 @@ export async function registerStudentFeatures(
     vscode.commands.registerCommand(COMMANDS.openSupportLinks, () => {
       if (Object.keys(config["support-links"]).length === 0) {
         vscode.window.showInformationMessage(
-          "Classroom 50: no support materials configured.",
+          t("Classroom 50: no support materials configured."),
         );
         return;
       }
@@ -334,26 +339,26 @@ export async function registerStudentFeatures(
   createStatusBarButton(
     context,
     STATUS_BAR_PRIORITY.checkFeedback,
-    "$(bell) Check Feedback",
-    "Classroom 50: check for new feedback",
+    `$(bell) ${t("Check Feedback")}`,
+    t("Classroom 50: check for new feedback"),
     COMMANDS.checkFeedback,
   );
   registerFeedbackPRButton(context, feedbackPRUrl(repoInfo, prNumber));
   createStatusBarButton(
     context,
     STATUS_BAR_PRIORITY.submitAssignment,
-    "$(cloud-upload) Submit",
+    `$(cloud-upload) ${t("Submit")}`,
     config.autograder
-      ? "Classroom 50: submit your work and run the autograder"
-      : "Classroom 50: submit your work",
+      ? t("Classroom 50: submit your work and run the autograder")
+      : t("Classroom 50: submit your work"),
     COMMANDS.submitAssignment,
   );
   if (Object.keys(config["support-links"]).length > 0) {
     createStatusBarButton(
       context,
       STATUS_BAR_PRIORITY.supportLinks,
-      "$(book) Support Materials",
-      "Classroom 50: open support materials",
+      `$(book) ${t("Support Materials")}`,
+      t("Classroom 50: open support materials"),
       COMMANDS.openSupportLinks,
     );
   }
@@ -383,8 +388,8 @@ export function registerFeedbackPRButton(
   createStatusBarButton(
     context,
     STATUS_BAR_PRIORITY.openFeedbackPR,
-    "$(git-pull-request) Feedback PR",
-    "Classroom 50: open feedback PR in browser",
+    `$(git-pull-request) ${t("Feedback PR")}`,
+    t("Classroom 50: open feedback PR in browser"),
     COMMANDS.openFeedbackPR,
   );
   void vscode.commands.executeCommand(
@@ -409,7 +414,7 @@ async function submitAndScheduleCheck(
   await reportSyncResult(await syncAfterSubmit(workspacePath));
 
   if (!hasAutograder) {
-    vscode.window.showInformationMessage("Classroom 50: submission sent!");
+    vscode.window.showInformationMessage(t("Classroom 50: submission sent!"));
     return;
   }
 
@@ -420,10 +425,10 @@ async function submitAndScheduleCheck(
   context.subscriptions.push({ dispose: () => clearTimeout(timeout) });
 
   const action = await vscode.window.showInformationMessage(
-    "Classroom 50: submission sent! The autograder is running — new feedback will be checked in a few minutes.",
-    ACTIONS.viewAutograder,
+    t("Classroom 50: submission sent! The autograder is running — new feedback will be checked in a few minutes."),
+    t(ACTIONS.viewAutograder),
   );
-  if (action === ACTIONS.viewAutograder) {
+  if (action === t(ACTIONS.viewAutograder)) {
     openInBrowser(`${repositoryUrl}/actions`);
   }
 }
@@ -432,12 +437,12 @@ async function reportSyncResult(result: SyncResult): Promise<void> {
   switch (result.status) {
     case "dirty":
       vscode.window.showWarningMessage(
-        `Classroom 50: ${result.changedFiles} file(s) in your folder differ from the version you just submitted. Submit again if you want to include these changes.`,
+        t("Classroom 50: {0} file(s) in your folder differ from the version you just submitted. Submit again if you want to include these changes.", result.changedFiles),
       );
       break;
     case "localCommits":
       vscode.window.showWarningMessage(
-        `Classroom 50: your local repository has ${result.commits} commit(s) that are not in the submitted history, so it was not synchronized. Use "git pull" to integrate the submission.`,
+        t("Classroom 50: your local repository has {0} commit(s) that are not in the submitted history, so it was not synchronized. Use \"git pull\" to integrate the submission.", result.commits),
       );
       break;
     case "synced":

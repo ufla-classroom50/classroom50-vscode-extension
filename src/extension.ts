@@ -7,6 +7,7 @@ import { registerFeedbackPRButton, registerStudentFeatures } from "./student";
 import { registerStudentView } from "./studentView";
 import { registerTeacherFeatures } from "./teacher";
 import { ExtensionConfig } from "./types";
+import { initI18n, t } from "./i18n";
 
 const GITHUB_SCOPES = ["repo", "read:org"];
 
@@ -49,7 +50,7 @@ async function setupRepositoryFeatures(
   }
 
   if (!prNumber) {
-    vscode.window.showWarningMessage("Classroom 50: feedback PR not found.");
+    vscode.window.showWarningMessage(t("Classroom 50: feedback PR not found."));
     return;
   }
 
@@ -83,15 +84,16 @@ async function setupTeacherFeatures(
 
 async function promptWorkspaceTrust(): Promise<void> {
   const action = await vscode.window.showInformationMessage(
-    "Classroom 50: this folder is a Classroom 50 assignment. Trust it to enable feedback notifications and submission.",
-    ACTIONS.manageTrust,
+    t("Classroom 50: this folder is a Classroom 50 assignment. Trust it to enable feedback notifications and submission."),
+    t(ACTIONS.manageTrust),
   );
-  if (action === ACTIONS.manageTrust) {
+  if (action === t(ACTIONS.manageTrust)) {
     await vscode.commands.executeCommand("workbench.trust.manage");
   }
 }
 
 export async function activate(context: vscode.ExtensionContext) {
+  initI18n(context);
   const workspacePath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
   let teacherReady = false;
   let repositoryReady = false;
@@ -115,7 +117,7 @@ export async function activate(context: vscode.ExtensionContext) {
     const token = await getGitHubToken(true);
     if (!token) {
       vscode.window.showErrorMessage(
-        "Classroom 50: could not authenticate with GitHub.",
+        t("Classroom 50: could not authenticate with GitHub."),
       );
       return;
     }

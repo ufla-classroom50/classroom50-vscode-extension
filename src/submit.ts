@@ -3,6 +3,7 @@ import { execFile } from "child_process";
 import { promisify } from "util";
 import { ACTIONS, STUDENT_CLI_INSTALL_URL } from "./constants";
 import { openInBrowser } from "./ui";
+import { t } from "./i18n";
 
 const execFileAsync = promisify(execFile);
 
@@ -35,26 +36,28 @@ export async function ensureStudentCli(purpose: string): Promise<boolean> {
     return true;
   }
   const action = await vscode.window.showErrorMessage(
-    `Classroom 50: ${purpose} requires the GitHub CLI (gh) with the gh-student extension.`,
-    ACTIONS.installGuide,
+    t("Classroom 50: {0} requires the GitHub CLI (gh) with the gh-student extension.", purpose),
+    t(ACTIONS.installGuide),
   );
-  if (action === ACTIONS.installGuide) {
+  if (action === t(ACTIONS.installGuide)) {
     openInBrowser(STUDENT_CLI_INSTALL_URL);
   }
   return false;
 }
 
 export async function runSubmit(workspacePath: string): Promise<boolean> {
-  if (!(await ensureStudentCli("submitting"))) {
+  if (!(await ensureStudentCli(t("submitting")))) {
     return false;
   }
 
   const confirm = await vscode.window.showWarningMessage(
-    "Submit your work? This commits and pushes your code to the main branch and starts the autograder.",
+    t(
+      "Submit your work? This commits and pushes your code to the main branch and starts the autograder.",
+    ),
     { modal: true },
-    ACTIONS.submit,
+    t(ACTIONS.submit),
   );
-  if (confirm !== ACTIONS.submit) {
+  if (confirm !== t(ACTIONS.submit)) {
     return false;
   }
 
@@ -79,7 +82,7 @@ export async function runSubmit(workspacePath: string): Promise<boolean> {
 
   if (exitCode !== 0) {
     vscode.window.showErrorMessage(
-      "Classroom 50: submission failed. Check the terminal output for details.",
+      t("Classroom 50: submission failed. Check the terminal output for details."),
     );
     return false;
   }

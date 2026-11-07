@@ -1,3 +1,4 @@
+import { t } from "./i18n";
 import { Feedback, InlineComment, RepoInfo } from "./types";
 
 export function stripMarkdown(text: string): string {
@@ -26,14 +27,20 @@ export function formatFeedbackMessage(
   feedback: Feedback,
   assignmentName: string,
 ): string {
-  const parts = [`💬 New feedback from @${feedback.author} — ${assignmentName}`];
+  const parts = [
+    t("💬 New feedback from @{0} — {1}", feedback.author, assignmentName),
+  ];
   const preview = stripMarkdown(feedback.body);
   if (preview.length > 0) {
     parts.push(truncate(preview, 140));
   }
   if (feedback.inline.length > 0) {
     parts.push(
-      `📍 Check inline comments (${feedback.inline.length}), starting at ${formatInlineLocation(feedback.inline[0])}`,
+      t(
+        "📍 Check inline comments ({0}), starting at {1}",
+        feedback.inline.length,
+        formatInlineLocation(feedback.inline[0]),
+      ),
     );
   }
   return parts.join(" \n");

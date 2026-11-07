@@ -1,7 +1,7 @@
 {
   "name": "classroom50-vscode-extension",
   "displayName": "Classroom 50",
-  "description": "Classroom 50 in VS Code: feedback notifications and assignment submission for students, and a sidebar for teachers to follow and message their students",
+  "description": "%extension.description%",
   "version": "0.1.0",
   "publisher": "ufla-classroom50",
   "repository": {
@@ -28,88 +28,88 @@
     "commands": [
       {
         "command": "classroom50-vscode-extension.checkFeedback",
-        "title": "Check for new feedback",
+        "title": "%command.checkFeedback%",
         "category": "Classroom 50"
       },
       {
         "command": "classroom50-vscode-extension.openFeedback",
-        "title": "Open feedback",
+        "title": "%command.openFeedback%",
         "category": "Classroom 50"
       },
       {
         "command": "classroom50-vscode-extension.openFeedbackPR",
-        "title": "Open feedback PR in browser",
+        "title": "%command.openFeedbackPR%",
         "category": "Classroom 50"
       },
       {
         "command": "classroom50-vscode-extension.openSupportLinks",
-        "title": "Open support materials",
+        "title": "%command.openSupportLinks%",
         "category": "Classroom 50"
       },
       {
         "command": "classroom50-vscode-extension.submitAssignment",
-        "title": "Submit assignment",
+        "title": "%command.submitAssignment%",
         "category": "Classroom 50"
       },
       {
         "command": "classroom50-vscode-extension.selectOrganization",
-        "title": "Select organization",
+        "title": "%command.selectOrganization%",
         "category": "Classroom 50"
       },
       {
         "command": "classroom50-vscode-extension.selectAssignment",
-        "title": "Select assignment",
+        "title": "%command.selectAssignment%",
         "category": "Classroom 50"
       },
       {
         "command": "classroom50-vscode-extension.loadStudents",
-        "title": "Load students",
+        "title": "%command.loadStudents%",
         "category": "Classroom 50",
         "icon": "$(refresh)"
       },
       {
         "command": "classroom50-vscode-extension.toggleAllStudents",
-        "title": "Select or clear all students",
+        "title": "%command.toggleAllStudents%",
         "category": "Classroom 50",
         "icon": "$(check-all)"
       },
       {
         "command": "classroom50-vscode-extension.sendAnnouncement",
-        "title": "Send announcement to checked students",
+        "title": "%command.sendAnnouncement%",
         "category": "Classroom 50",
         "icon": "$(megaphone)"
       },
       {
         "command": "classroom50-vscode-extension.openStudentRepo",
-        "title": "Open student repository",
+        "title": "%command.openStudentRepo%",
         "category": "Classroom 50"
       },
       {
         "command": "classroom50-vscode-extension.signIn",
-        "title": "Sign in with GitHub",
+        "title": "%command.signIn%",
         "category": "Classroom 50"
       },
       {
         "command": "classroom50-vscode-extension.refreshAssignments",
-        "title": "Refresh assignments",
+        "title": "%command.refreshAssignments%",
         "category": "Classroom 50",
         "icon": "$(refresh)"
       },
       {
         "command": "classroom50-vscode-extension.acceptAssignment",
-        "title": "Accept assignment",
+        "title": "%command.acceptAssignment%",
         "category": "Classroom 50",
         "icon": "$(check)"
       },
       {
         "command": "classroom50-vscode-extension.cloneAssignment",
-        "title": "Clone assignment",
+        "title": "%command.cloneAssignment%",
         "category": "Classroom 50",
         "icon": "$(cloud-download)"
       },
       {
         "command": "classroom50-vscode-extension.openAssignment",
-        "title": "Open assignment",
+        "title": "%command.openAssignment%",
         "category": "Classroom 50",
         "icon": "$(folder-opened)"
       }
@@ -127,13 +127,13 @@
       "classroom50": [
         {
           "id": "classroom50.studentView",
-          "name": "Assignments",
+          "name": "%view.assignments%",
           "when": "!classroom50.signedIn || classroom50.isStudent || !classroom50.isTeacher",
           "icon": "resources/classroom50.svg"
         },
         {
           "id": "classroom50.teacherView",
-          "name": "Teacher",
+          "name": "%view.teacher%",
           "when": "classroom50.isTeacher",
           "icon": "resources/classroom50.svg"
         }
@@ -250,10 +250,30 @@
     "viewsWelcome": [
       {
         "view": "classroom50.studentView",
-        "contents": "Sign in with GitHub to see your classrooms and assignments.\n[Sign in with GitHub](command:classroom50-vscode-extension.signIn)",
+        "contents": "%view.assignments.signIn%",
         "when": "!classroom50.signedIn"
       }
-    ]
+    ],
+    "configuration": {
+      "title": "Classroom 50",
+      "properties": {
+        "classroom50.language": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "en",
+            "pt-br"
+          ],
+          "default": "auto",
+          "enumDescriptions": [
+            "%config.language.auto%",
+            "%config.language.en%",
+            "%config.language.ptbr%"
+          ],
+          "description": "%config.language%"
+        }
+      }
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",

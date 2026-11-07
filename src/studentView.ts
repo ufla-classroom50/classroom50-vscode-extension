@@ -13,6 +13,7 @@ import {
 } from "./github";
 import { ensureStudentCli } from "./submit";
 import { StudentClassroom } from "./types";
+import { t } from "./i18n";
 
 const execFileAsync = promisify(execFile);
 const ACCEPT_TIMEOUT_MS = 3 * 60 * 1000;
@@ -104,19 +105,19 @@ class StudentTreeProvider implements vscode.TreeDataProvider<StudentNode> {
     item.tooltip = assignment.repo;
 
     if (assignment.state === "notAccepted") {
-      item.description = "not accepted";
+      item.description = t("not accepted");
       item.iconPath = new vscode.ThemeIcon("circle-large-outline");
       item.command = {
         command: COMMANDS.acceptAssignment,
-        title: "Accept assignment",
+        title: t("Accept assignment"),
         arguments: [assignment],
       };
     } else if (assignment.state === "accepted") {
-      item.description = "not cloned";
+      item.description = t("not cloned");
       item.iconPath = new vscode.ThemeIcon("cloud");
       item.command = {
         command: COMMANDS.cloneAssignment,
-        title: "Clone assignment",
+        title: t("Clone assignment"),
         arguments: [assignment],
       };
     } else {
@@ -124,11 +125,11 @@ class StudentTreeProvider implements vscode.TreeDataProvider<StudentNode> {
         vscode.workspace.workspaceFolders?.[0]?.uri.fsPath,
         localRepoPath(assignment.org, assignment.repo),
       );
-      item.description = isOpen ? "open" : undefined;
+      item.description = isOpen ? t("open") : undefined;
       item.iconPath = new vscode.ThemeIcon(isOpen ? "folder-opened" : "folder");
       item.command = {
         command: COMMANDS.openAssignment,
-        title: "Open assignment",
+        title: t("Open assignment"),
         arguments: [assignment],
       };
     }
@@ -182,7 +183,7 @@ async function cloneRepo(assignment: StudentAssignment): Promise<boolean> {
   return vscode.window.withProgress(
     {
       location: vscode.ProgressLocation.Notification,
-      title: `Classroom 50: cloning ${assignment.name}...`,
+      title: t("Classroom 50: cloning {0}...", assignment.name),
     },
     async () => {
       try {
@@ -195,7 +196,7 @@ async function cloneRepo(assignment: StudentAssignment): Promise<boolean> {
       } catch (err) {
         console.error("Classroom 50: git clone failed", err);
         vscode.window.showErrorMessage(
-          `Classroom 50: failed to clone ${assignment.repo}.`,
+          t("Classroom 50: failed to clone {0}.", assignment.repo),
         );
         return false;
       }
@@ -204,14 +205,14 @@ async function cloneRepo(assignment: StudentAssignment): Promise<boolean> {
 }
 
 async function acceptRepo(assignment: StudentAssignment): Promise<boolean> {
-  if (!(await ensureStudentCli("accepting an assignment"))) {
+  if (!(await ensureStudentCli(t("accepting an assignment")))) {
     return false;
   }
 
   return vscode.window.withProgress(
     {
       location: vscode.ProgressLocation.Notification,
-      title: `Classroom 50: accepting ${assignment.name}...`,
+      title: t("Classroom 50: accepting {0}...", assignment.name),
     },
     async () => {
       try {
@@ -232,10 +233,13 @@ async function acceptRepo(assignment: StudentAssignment): Promise<boolean> {
         console.error("Classroom 50: gh student accept failed", err);
         const needsLogin = !stderr || /auth|login|token/i.test(stderr);
         vscode.window.showErrorMessage(
-          `Classroom 50: could not accept ${assignment.name}.` +
+          t("Classroom 50: could not accept {0}.", assignment.name) +
             (stderr ? ` ${stderr.split("\n").pop()}` : "") +
             (needsLogin
-              ? ' If you have never used the GitHub CLI, run "gh auth login" in a terminal first.'
+              ? " " +
+                t(
+                  'If you have never used the GitHub CLI, run "gh auth login" in a terminal first.',
+                )
               : ""),
         );
         return false;
@@ -260,7 +264,7 @@ export function setFeedbackBadge(count: number): void {
   }
   studentTreeView.badge =
     count > 0
-      ? { value: count, tooltip: `${count} unread feedback` }
+      ? { value: count, tooltip: t("{0} unread feedback", count) }
       : undefined;
 }
 
@@ -309,7 +313,9 @@ export function registerStudentView(
     );
     treeView.message =
       provider.classrooms.length === 0
-        ? "No classrooms found. If you were invited to a class, accept the organization invitation on GitHub and refresh."
+        ? t(
+            "No classrooms found. If you were invited to a class, accept the organization invitation on GitHub and refresh.",
+          )
         : undefined;
     provider.refresh();
   };

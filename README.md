@@ -179,6 +179,25 @@ As funções de aluno — monitoramento de feedback, contador de não lidos e Su
 
 ---
 
+## Idioma
+
+A extensão funciona em **português** e em **inglês**. Por padrão, ela segue o idioma do
+VS Code. Para escolher outro, abra as configurações (`Ctrl+,`), procure por
+**Classroom 50: Language** e escolha:
+
+| Opção | Idioma |
+|---|---|
+| `auto` | Segue o idioma do VS Code (padrão) |
+| `en` | Inglês |
+| `pt-br` | Português do Brasil |
+
+Ao trocar, a extensão pede para recarregar a janela. A configuração vale para mensagens,
+notificações, painéis e as listas das guias laterais. Os nomes dos comandos (`Ctrl+Shift+P`) e
+os títulos das guias seguem sempre o idioma do VS Code. As mensagens que vêm do `gh` e do
+GitHub aparecem como essas ferramentas as enviam.
+
+---
+
 ## Pastas não confiáveis (Restricted Mode)
 
 Quando uma pasta é aberta sem ser marcada como confiável, o VS Code entra em **Restricted Mode**.
@@ -276,6 +295,7 @@ O comando gera o arquivo `classroom50-vscode-extension-<versão>.vsix` na raiz d
 | `config.ts` | Leitura e validação do `.c50extension.json` e do remote do git |
 | `format.ts` | Formatação de textos e URLs |
 | `ui.ts` | Componentes de interface reutilizáveis |
+| `i18n.ts` | Tradução das mensagens (português e inglês) e escolha do idioma |
 | `constants.ts` | Identificadores de comandos, prioridades da barra de status e textos fixos |
 | `types.ts` | Interfaces compartilhadas |
 

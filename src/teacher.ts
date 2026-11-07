@@ -16,6 +16,7 @@ import {
   postComment,
 } from "./github";
 import { AssignmentRef, StudentRepo } from "./types";
+import { locale, t } from "./i18n";
 
 type TeacherNode =
   | { kind: "organization" }
@@ -51,25 +52,25 @@ class TeacherTreeProvider implements vscode.TreeDataProvider<TeacherNode> {
 
   getTreeItem(node: TeacherNode): vscode.TreeItem {
     if (node.kind === "organization") {
-      const item = new vscode.TreeItem("Organization");
-      item.description = this.org ?? "click to select";
+      const item = new vscode.TreeItem(t("Organization"));
+      item.description = this.org ?? t("click to select");
       item.iconPath = new vscode.ThemeIcon("organization");
       item.command = {
         command: COMMANDS.selectOrganization,
-        title: "Select organization",
+        title: t("Select organization"),
       };
       return item;
     }
 
     if (node.kind === "assignment") {
-      const item = new vscode.TreeItem("Assignment");
+      const item = new vscode.TreeItem(t("Assignment"));
       item.description = this.assignment
         ? `${this.assignment.name} (${this.assignment.classroomName})`
-        : "click to select";
+        : t("click to select");
       item.iconPath = new vscode.ThemeIcon("book");
       item.command = {
         command: COMMANDS.selectAssignment,
-        title: "Select assignment",
+        title: t("Select assignment"),
       };
       return item;
     }
@@ -78,16 +79,16 @@ class TeacherTreeProvider implements vscode.TreeDataProvider<TeacherNode> {
     const hasCommits = student.lastCommitDate.getTime() > 0;
     const item = new vscode.TreeItem(student.username);
     item.description = hasCommits
-      ? student.lastCommitDate.toLocaleString()
-      : "no commits";
-    item.tooltip = `Open ${student.name}`;
+      ? student.lastCommitDate.toLocaleString(locale())
+      : t("no commits");
+    item.tooltip = t("Open {0}", student.name);
     item.iconPath = new vscode.ThemeIcon("person");
     item.checkboxState = this.checked.has(student.name)
       ? vscode.TreeItemCheckboxState.Checked
       : vscode.TreeItemCheckboxState.Unchecked;
     item.command = {
       command: COMMANDS.openStudentRepo,
-      title: "Open repository",
+      title: t("Open repository"),
       arguments: [student.name],
     };
     return item;
@@ -112,7 +113,7 @@ export function registerTeacherFeatures(
     const { org, assignment } = provider;
     if (!org || !assignment) {
       vscode.window.showWarningMessage(
-        "Classroom 50: select an organization and an assignment first.",
+        t("Classroom 50: select an organization and an assignment first."),
       );
       return;
     }
@@ -124,7 +125,7 @@ export function registerTeacherFeatures(
     provider.checked.clear();
     treeView.message =
       provider.students.length === 0
-        ? "No student repositories found for this assignment."
+        ? t("No student repositories found for this assignment.")
         : undefined;
     provider.refresh();
   };
@@ -145,7 +146,7 @@ export function registerTeacherFeatures(
     }),
     vscode.commands.registerCommand(COMMANDS.selectOrganization, async () => {
       const selected = await vscode.window.showQuickPick(adminOrgs, {
-        placeHolder: "Select the organization",
+        placeHolder: t("Select the organization"),
       });
       if (selected && selected !== provider.org) {
         provider.org = selected;
@@ -160,7 +161,7 @@ export function registerTeacherFeatures(
       const org = provider.org;
       if (!org) {
         vscode.window.showWarningMessage(
-          "Classroom 50: select an organization first.",
+          t("Classroom 50: select an organization first."),
         );
         return;
       }
@@ -171,7 +172,7 @@ export function registerTeacherFeatures(
       );
       if (assignments.length === 0) {
         vscode.window.showWarningMessage(
-          `Classroom 50: no assignments found in ${org}.`,
+          t("Classroom 50: no assignments found in {0}.", org),
         );
         return;
       }
@@ -183,7 +184,7 @@ export function registerTeacherFeatures(
           detail: `${a.classroom}/${a.slug}`,
           assignment: a,
         })),
-        { placeHolder: "Select the assignment", matchOnDescription: true },
+        { placeHolder: t("Select the assignment"), matchOnDescription: true },
       );
       if (selected) {
         provider.assignment = selected.assignment;
@@ -215,7 +216,7 @@ export function registerTeacherFeatures(
       );
       if (!provider.org || selected.length === 0) {
         vscode.window.showWarningMessage(
-          "Classroom 50: check the students who should receive the announcement first.",
+          t("Classroom 50: check the students who should receive the announcement first."),
         );
         return;
       }
@@ -236,7 +237,7 @@ async function openStudentRepo(org: string, repo: string): Promise<void> {
     const cloned = await vscode.window.withProgress(
       {
         location: vscode.ProgressLocation.Notification,
-        title: `Classroom 50: cloning ${repo}...`,
+        title: t("Classroom 50: cloning {0}...", repo),
       },
       async () => {
         try {
@@ -254,7 +255,7 @@ async function openStudentRepo(org: string, repo: string): Promise<void> {
     );
 
     if (!cloned) {
-      vscode.window.showErrorMessage(`Classroom 50: failed to clone ${repo}.`);
+      vscode.window.showErrorMessage(t("Classroom 50: failed to clone {0}.", repo));
       return;
     }
   }
@@ -274,17 +275,20 @@ async function sendAnnouncement(
   const text = await getAnnouncementText();
   if (!text) {
     vscode.window.showInformationMessage(
-      "Classroom 50: announcement cancelled.",
+      t("Classroom 50: announcement cancelled."),
     );
     return;
   }
 
   const confirm = await vscode.window.showWarningMessage(
-    `You are about to send this announcement to ${students.length} student(s). Continue?`,
+    t(
+      "You are about to send this announcement to {0} student(s). Continue?",
+      students.length,
+    ),
     { modal: true },
-    ACTIONS.send,
+    t(ACTIONS.send),
   );
-  if (confirm !== ACTIONS.send) {
+  if (confirm !== t(ACTIONS.send)) {
     return;
   }
 
@@ -293,7 +297,7 @@ async function sendAnnouncement(
   await vscode.window.withProgress(
     {
       location: vscode.ProgressLocation.Notification,
-      title: "Classroom 50: sending announcement",
+      title: t("Classroom 50: sending announcement"),
     },
     async (progress) => {
       for (const [index, student] of students.entries()) {
@@ -315,11 +319,11 @@ async function sendAnnouncement(
 
   if (failedStudents.length === 0) {
     vscode.window.showInformationMessage(
-      `Classroom 50: announcement sent to all ${students.length} student(s).`,
+      t("Classroom 50: announcement sent to all {0} student(s).", students.length),
     );
   } else {
     vscode.window.showWarningMessage(
-      `Classroom 50: announcement sent, but failed for: ${failedStudents.join(", ")}.`,
+      t("Classroom 50: announcement sent, but failed for: {0}.", failedStudents.join(", ")),
     );
   }
 }
@@ -329,7 +333,7 @@ async function getAnnouncementText(): Promise<string | undefined> {
   const tempFilePath = path.join(tempDirPath, "announcement.md");
 
   try {
-    fs.writeFileSync(tempFilePath, `${ANNOUNCEMENT_PLACEHOLDER}\n`, {
+    fs.writeFileSync(tempFilePath, `${t(ANNOUNCEMENT_PLACEHOLDER)}\n`, {
       encoding: "utf8",
       flag: "wx",
     });
@@ -338,7 +342,9 @@ async function getAnnouncementText(): Promise<string | undefined> {
     await vscode.window.showTextDocument(doc, { preview: false });
 
     vscode.window.showInformationMessage(
-      "Write your announcement in the editor. Save the file (Ctrl+S) when you are done.",
+      t(
+        "Write your announcement in the editor. Save the file (Ctrl+S) when you are done.",
+      ),
     );
 
     await new Promise<void>((resolve) => {
@@ -352,7 +358,7 @@ async function getAnnouncementText(): Promise<string | undefined> {
 
     const text = fs
       .readFileSync(tempFilePath, "utf8")
-      .replace(ANNOUNCEMENT_PLACEHOLDER, "")
+      .replace(t(ANNOUNCEMENT_PLACEHOLDER), "")
       .trim();
 
     await vscode.commands.executeCommand("workbench.action.closeActiveEditor");
