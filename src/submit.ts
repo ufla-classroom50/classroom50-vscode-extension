@@ -1,3 +1,7 @@
+/**
+ * Assignment submission through the Classroom 50 CLI (`gh student`).
+ */
+
 import * as vscode from "vscode";
 import { execFile } from "child_process";
 import { promisify } from "util";
@@ -7,6 +11,7 @@ import { t } from "./i18n";
 
 const execFileAsync = promisify(execFile);
 
+// Name and source identify our task when VS Code reports that a task ended.
 const TASK_NAME = "Submit assignment";
 const TASK_SOURCE = "Classroom 50";
 
@@ -31,6 +36,12 @@ function waitForTaskExit(): Promise<number | undefined> {
   });
 }
 
+/**
+ * Checks that `gh` and the `gh-student` extension are installed and, if not,
+ * offers the installation guide.
+ *
+ * @param purpose what the student was trying to do, shown in the message.
+ */
 export async function ensureStudentCli(purpose: string): Promise<boolean> {
   if (await isStudentCliInstalled()) {
     return true;
@@ -45,6 +56,17 @@ export async function ensureStudentCli(purpose: string): Promise<boolean> {
   return false;
 }
 
+/**
+ * Submits the assignment by running the official `gh student submit`, so the
+ * extension follows Classroom 50's own submission process instead of
+ * reimplementing it.
+ *
+ * It runs as a VS Code Task (not a hidden process) because the command may
+ * need interaction: the first time, gh can ask the student to sign in in the
+ * terminal. The task shows the output and reports its exit code back.
+ *
+ * @returns whether the submission succeeded (exit code 0).
+ */
 export async function runSubmit(workspacePath: string): Promise<boolean> {
   if (!(await ensureStudentCli(t("submitting")))) {
     return false;
@@ -76,6 +98,7 @@ export async function runSubmit(workspacePath: string): Promise<boolean> {
     clear: true,
   };
 
+// Start listening before running the task, so a fast exit is not missed.
   const exitPromise = waitForTaskExit();
   await vscode.tasks.executeTask(task);
   const exitCode = await exitPromise;

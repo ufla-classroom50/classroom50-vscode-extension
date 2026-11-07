@@ -1,3 +1,12 @@
+/**
+ * Assignments sidebar (student).
+ *
+ * Lets students accept, clone and open their assignments without typing
+ * commands in a terminal. Classrooms are discovered from the student's GitHub
+ * teams and the public files published by Classroom 50 (see
+ * fetchStudentClassrooms in github.ts).
+ */
+
 import * as vscode from "vscode";
 import * as fs from "fs";
 import * as os from "os";
@@ -16,8 +25,16 @@ import { StudentClassroom } from "./types";
 import { t } from "./i18n";
 
 const execFileAsync = promisify(execFile);
+// gh student accept creates the repository from the template and waits for it,
+// which can take a while; after this time the attempt is considered failed.
 const ACCEPT_TIMEOUT_MS = 3 * 60 * 1000;
 
+/**
+ * Where an assignment is for this student:
+ * - notAccepted: the student repository does not exist on GitHub yet;
+ * - accepted: it exists on GitHub but is not in the local clone folder;
+ * - cloned: the local folder exists.
+ */
 type AssignmentState = "notAccepted" | "accepted" | "cloned";
 
 interface StudentAssignment {
@@ -34,10 +51,15 @@ type StudentNode =
   | { kind: "classroom"; classroom: StudentClassroom }
   | { kind: "assignment"; assignment: StudentAssignment };
 
+/**
+ * Fixed clone location: ~/classroom50/<org>/<repo>. A fixed place lets the
+ * extension know which assignments are already cloned without asking.
+ */
 function localRepoPath(org: string, repo: string): string {
   return path.join(os.homedir(), STUDENT_CLONE_DIR, org, repo);
 }
 
+// Paths are case-insensitive on Windows (e.g. "c:\Users" vs "C:\Users").
 function isSamePath(a: string | undefined, b: string): boolean {
   if (!a) {
     return false;
@@ -49,6 +71,11 @@ function isSamePath(a: string | undefined, b: string): boolean {
   return normalize(a) === normalize(b);
 }
 
+/**
+ * Data of the Assignments sidebar: organization > classroom > assignment.
+ * Each assignment item has a primary action on click and an inline button,
+ * chosen by its state (`contextValue` drives the button in package.json).
+ */
 class StudentTreeProvider implements vscode.TreeDataProvider<StudentNode> {
   classrooms: StudentClassroom[] = [];
   assignments = new Map<string, StudentAssignment[]>();
@@ -137,6 +164,11 @@ class StudentTreeProvider implements vscode.TreeDataProvider<StudentNode> {
   }
 }
 
+/**
+ * VS Code passes different arguments depending on how a command is triggered:
+ * clicking the item passes the assignment (from `item.command.arguments`),
+ * while an inline button passes the whole tree node. This accepts both.
+ */
 function toAssignment(
   arg: StudentAssignment | StudentNode | undefined,
 ): StudentAssignment | undefined {
@@ -150,6 +182,11 @@ function classroomKey(classroom: StudentClassroom): string {
   return `${classroom.org}/${classroom.classroom}`;
 }
 
+/**
+ * Computes the state of each assignment of a classroom. The local folder is
+ * checked first (no network); only then the extension asks GitHub whether the
+ * repository exists.
+ */
 async function loadAssignments(
   token: string,
   login: string,
@@ -176,6 +213,7 @@ async function loadAssignments(
   );
 }
 
+/** Clones the student repository into the fixed folder, with a progress notification. */
 async function cloneRepo(assignment: StudentAssignment): Promise<boolean> {
   const target = localRepoPath(assignment.org, assignment.repo);
   fs.mkdirSync(path.dirname(target), { recursive: true });
@@ -204,6 +242,12 @@ async function cloneRepo(assignment: StudentAssignment): Promise<boolean> {
   );
 }
 
+/**
+ * Accepts the assignment with the official `gh student accept`, so the
+ * extension does not reimplement Classroom 50's logic (template copy,
+ * Feedback PR, organization invitation). It runs in the background; on
+ * failure, the last line of the gh error is shown to the student.
+ */
 async function acceptRepo(assignment: StudentAssignment): Promise<boolean> {
   if (!(await ensureStudentCli(t("accepting an assignment")))) {
     return false;
@@ -248,6 +292,7 @@ async function acceptRepo(assignment: StudentAssignment): Promise<boolean> {
   );
 }
 
+// Opens the repository in the current window, replacing the open folder.
 async function openRepo(assignment: StudentAssignment): Promise<void> {
   await vscode.commands.executeCommand(
     "vscode.openFolder",
@@ -256,6 +301,8 @@ async function openRepo(assignment: StudentAssignment): Promise<void> {
   );
 }
 
+// Kept so the feedback monitor can show the unread count as a badge on the
+// Classroom 50 icon of the activity bar.
 let studentTreeView: vscode.TreeView<StudentNode> | undefined;
 
 export function setFeedbackBadge(count: number): void {
@@ -268,6 +315,16 @@ export function setFeedbackBadge(count: number): void {
       : undefined;
 }
 
+/**
+ * Registers the Assignments sidebar and its commands.
+ *
+ * Without a session the sidebar only shows "Sign in with GitHub" (welcome
+ * content in package.json); it never opens a sign-in prompt by itself.
+ *
+ * @param getToken returns the GitHub token, interactively or silently.
+ * @returns a function that reloads the sidebar silently, called on activation
+ *   and whenever the GitHub session changes.
+ */
 export function registerStudentView(
   context: vscode.ExtensionContext,
   getToken: (interactive: boolean) => Promise<string | undefined>,

@@ -1,6 +1,11 @@
+/**
+ * Small reusable UI helpers.
+ */
+
 import * as vscode from "vscode";
 import { t } from "./i18n";
 
+/** Creates a visible status bar button that runs a command and is disposed with the extension. */
 export function createStatusBarButton(
   context: vscode.ExtensionContext,
   priority: number,
@@ -20,6 +25,11 @@ export function createStatusBarButton(
   return item;
 }
 
+/**
+ * Opens a URL in the default browser, accepting only http and https. Links
+ * come from configuration files and GitHub, so other schemes (file:,
+ * command:, vscode:...) are blocked.
+ */
 export function openInBrowser(url: string): void {
   let uri: vscode.Uri;
   try {

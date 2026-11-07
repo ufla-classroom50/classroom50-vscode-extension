@@ -1,3 +1,7 @@
+/**
+ * Support materials panel (Webview) of the student.
+ */
+
 import * as vscode from "vscode";
 import { t } from "./i18n";
 import { openInBrowser } from "./ui";
@@ -18,6 +22,12 @@ function hostOf(url: string): string {
   }
 }
 
+/**
+ * Support materials panel: a card per link configured by the teacher in
+ * `support-links`. The page only sends the index of the clicked material; the
+ * extension opens the URL itself through `openInBrowser`, which accepts only
+ * http(s) links.
+ */
 export class SupportPanel {
   private panel: vscode.WebviewPanel | undefined;
   private readonly entries: Array<[string, string]>;

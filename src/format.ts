@@ -1,6 +1,11 @@
+/**
+ * Text and URL formatting helpers.
+ */
+
 import { t } from "./i18n";
 import { Feedback, InlineComment, RepoInfo } from "./types";
 
+/** Turns Markdown into plain text for notification previews, which cannot show formatting. */
 export function stripMarkdown(text: string): string {
   return text
     .replace(/<[^>]*>/g, "")
@@ -18,11 +23,17 @@ export function truncate(text: string, maxLength: number): string {
     : text;
 }
 
+/** "Livro.java:42" — file name and line of a line comment. */
 export function formatInlineLocation(comment: InlineComment): string {
   const fileName = comment.path.split("/").pop();
   return `${fileName}:${comment.line ?? "?"}`;
 }
 
+/**
+ * Text of the notification of a new feedback: author, assignment, a preview of
+ * the general text and, when there are line comments, how many and where the
+ * first one is.
+ */
 export function formatFeedbackMessage(
   feedback: Feedback,
   assignmentName: string,

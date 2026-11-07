@@ -1,3 +1,11 @@
+/**
+ * Teacher sidebar.
+ *
+ * Lets teachers pick an organization and an assignment, see the students
+ * sorted by their latest commit, open a student's repository and send
+ * announcements to selected students.
+ */
+
 import * as vscode from "vscode";
 import * as fs from "fs";
 import * as os from "os";
@@ -23,10 +31,17 @@ type TeacherNode =
   | { kind: "assignment" }
   | { kind: "student"; student: StudentRepo };
 
+/**
+ * Data of the Teacher sidebar: two selector items (organization and
+ * assignment) followed by the students of the selected assignment.
+ * It is a native TreeView (not a Webview) to look like the rest of VS Code
+ * and to get native checkboxes for choosing announcement recipients.
+ */
 class TeacherTreeProvider implements vscode.TreeDataProvider<TeacherNode> {
   org: string | undefined;
   assignment: AssignmentRef | undefined;
   students: StudentRepo[] = [];
+// Repositories checked as announcement recipients.
   readonly checked = new Set<string>();
 
   private readonly changeEmitter = new vscode.EventEmitter<void>();
@@ -95,6 +110,13 @@ class TeacherTreeProvider implements vscode.TreeDataProvider<TeacherNode> {
   }
 }
 
+/**
+ * Registers the Teacher sidebar and its commands.
+ *
+ * @param adminOrgs organizations where the user is a teacher (admin of an
+ *   organization with the `classroom50` repository). With only one, it is
+ *   selected automatically.
+ */
 export function registerTeacherFeatures(
   context: vscode.ExtensionContext,
   token: string,
@@ -227,6 +249,12 @@ export function registerTeacherFeatures(
   provider.refresh();
 }
 
+/**
+ * Opens a student's repository in a new window. The first time it is cloned
+ * into ~/classroom50-students/<org>/; later it is just reopened. `execFile`
+ * passes the arguments directly to git (no shell), so a repository name cannot
+ * inject commands.
+ */
 async function openStudentRepo(org: string, repo: string): Promise<void> {
   const localBasePath = path.join(os.homedir(), "classroom50-students", org);
   const localRepoPath = path.join(localBasePath, repo);
@@ -267,6 +295,12 @@ async function openStudentRepo(org: string, repo: string): Promise<void> {
   );
 }
 
+/**
+ * Sends an announcement as a comment on the Feedback PR of each selected
+ * student. Since the student's extension already watches that PR, the
+ * announcement arrives as a regular notification, with no extra service.
+ * Failures are collected and reported at the end instead of stopping the loop.
+ */
 async function sendAnnouncement(
   token: string,
   org: string,
@@ -328,6 +362,12 @@ async function sendAnnouncement(
   }
 }
 
+/**
+ * Lets the teacher write the announcement in a real editor (Markdown, multiple
+ * lines) instead of a one-line input box. A temporary file is opened, and
+ * saving it (Ctrl+S) means "done". The file lives in a private temporary
+ * folder and is always deleted afterwards.
+ */
 async function getAnnouncementText(): Promise<string | undefined> {
   const tempDirPath = fs.mkdtempSync(path.join(os.tmpdir(), "c50-announcement-"));
   const tempFilePath = path.join(tempDirPath, "announcement.md");

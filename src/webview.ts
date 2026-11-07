@@ -1,5 +1,10 @@
+/**
+ * Shared structure of the extension's Webview panels.
+ */
+
 import * as crypto from "crypto";
 
+/** Escapes text before inserting it into HTML, so it is shown and never interpreted. */
 export function escapeHtml(text: string): string {
   return text
     .replace(/&/g, "&amp;")
@@ -9,6 +14,8 @@ export function escapeHtml(text: string): string {
     .replace(/'/g, "&#39;");
 }
 
+// Styles shared by all panels. They use VS Code theme variables, so panels
+// follow the user's theme (dark, light or high contrast).
 const BASE_STYLES = `
   body { font-family: var(--vscode-font-family); font-size: var(--vscode-font-size);
          color: var(--vscode-foreground); padding: 12px 20px; line-height: 1.5; }
@@ -32,6 +39,8 @@ const BASE_STYLES = `
   .empty { color: var(--vscode-descriptionForeground); }
 `;
 
+// The only script of the panels: forwards clicks on elements with a
+// `data-action` attribute to the extension through postMessage.
 const CLICK_SCRIPT = `
     const vscode = acquireVsCodeApi();
     document.addEventListener("click", (event) => {
@@ -49,6 +58,14 @@ const CLICK_SCRIPT = `
     });
 `;
 
+/**
+ * Builds a complete panel page with the shared styles and click script.
+ *
+ * The Content Security Policy blocks everything by default and allows only:
+ * - styles and the script that carry this page's random nonce;
+ * - images from https (e.g. GitHub avatars).
+ * Any script or inline event handler inside comment text is therefore ignored.
+ */
 export function buildWebviewPage(styles: string, body: string): string {
   const nonce = crypto.randomBytes(16).toString("base64");
   return `<!DOCTYPE html>

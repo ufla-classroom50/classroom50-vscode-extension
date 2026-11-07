@@ -1,3 +1,7 @@
+/**
+ * Configuration of the assignment (`.c50extension.json`) and git remote.
+ */
+
 import * as vscode from "vscode";
 import * as fs from "fs";
 import * as path from "path";
@@ -6,6 +10,11 @@ import { CONFIG_FILE_NAME } from "./constants";
 import { ExtensionConfig, RepoInfo } from "./types";
 import { t } from "./i18n";
 
+/**
+ * Checks each field of `.c50extension.json`.
+ *
+ * @returns a message naming the field to fix, or `undefined` if the file is valid.
+ */
 function validateConfig(data: Record<string, unknown>): string | undefined {
   const assignmentName = data["assignment-name"];
   if (typeof assignmentName !== "string" || assignmentName.length === 0) {
@@ -51,10 +60,22 @@ function validateConfig(data: Record<string, unknown>): string | undefined {
   return undefined;
 }
 
+/** Whether the folder is a Classroom 50 assignment (has the configuration file). */
 export function hasConfigFile(workspacePath: string): boolean {
   return fs.existsSync(path.join(workspacePath, CONFIG_FILE_NAME));
 }
 
+/**
+ * Reads and validates `.c50extension.json` from the root of the open folder.
+ *
+ * The file is the extension's own (the teacher adds it to the assignment
+ * template), instead of Classroom 50's `.classroom50.yaml`, so future changes
+ * in Classroom 50 do not break the extension. It only holds what git cannot
+ * tell: the organization and repository come from the git remote.
+ *
+ * @returns the configuration, or `undefined` when there is no file (silently)
+ *   or when it is invalid (with an error message naming the field).
+ */
 export function loadConfig(workspacePath: string): ExtensionConfig | undefined {
   const configPath = path.join(workspacePath, CONFIG_FILE_NAME);
   if (!fs.existsSync(configPath)) {
@@ -86,6 +107,10 @@ export function loadConfig(workspacePath: string): ExtensionConfig | undefined {
   };
 }
 
+/**
+ * Gets the organization and repository from the `origin` remote, in HTTPS or
+ * SSH form (https://github.com/<org>/<repo>.git or git@github.com:<org>/<repo>.git).
+ */
 export function parseGitRemote(workspacePath: string): RepoInfo | undefined {
   let remoteUrl: string;
   try {

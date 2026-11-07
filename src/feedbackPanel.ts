@@ -1,9 +1,17 @@
+/**
+ * Feedback panel (Webview) of the student.
+ */
+
 import * as vscode from "vscode";
 import { formatInlineLocation } from "./format";
 import { locale, t } from "./i18n";
 import { Feedback } from "./types";
 import { buildWebviewPage, escapeHtml } from "./webview";
 
+/**
+ * Actions the panel delegates to the feedback monitor, which owns the state
+ * (read/unread) and the access to files and the browser.
+ */
 export interface FeedbackPanelHandlers {
   markAsRead(key: string): void;
   markAllAsRead(): void;
@@ -11,6 +19,7 @@ export interface FeedbackPanelHandlers {
   openInlineFile(key: string, inlineIndex: number): void;
 }
 
+// Messages sent by the panel's script when the student clicks something.
 interface PanelMessage {
   action: "markRead" | "markAllRead" | "openUrl" | "openFile";
   key?: string;
@@ -19,6 +28,11 @@ interface PanelMessage {
 
 const PANEL_VIEW_TYPE = "classroom50.feedback";
 
+/**
+ * Renders Markdown with VS Code's own renderer (built-in Markdown extension),
+ * so comments look like in GitHub without adding a library. Falls back to
+ * plain text if the renderer is unavailable.
+ */
 async function renderMarkdown(text: string): Promise<string> {
   try {
     const html = await vscode.commands.executeCommand<string>(
@@ -41,6 +55,15 @@ function formatDate(isoDate: string): string {
     : date.toLocaleString(locale());
 }
 
+/**
+ * Feedback panel: a Webview opened beside the code that stays open until the
+ * student closes it. Unread feedback appears first, highlighted; read feedback
+ * stays available in a collapsed "Read" section with less emphasis.
+ *
+ * Security: comment text comes from GitHub and may contain HTML. The page's
+ * Content Security Policy (see webview.ts) only runs the panel's own script and
+ * loads only https images, so a malicious comment cannot execute code.
+ */
 export class FeedbackPanel {
   private panel: vscode.WebviewPanel | undefined;
   private readonly renderCache = new Map<string, string>();
@@ -64,6 +87,7 @@ export class FeedbackPanel {
           enableScripts: true,
           enableCommandUris: false,
           localResourceRoots: [],
+// Keep the page when the tab is hidden, so switching tabs does not rebuild it.
           retainContextWhenHidden: true,
         },
       );
@@ -89,6 +113,7 @@ export class FeedbackPanel {
     this.panel?.dispose();
   }
 
+// Messages come from the webview, so their fields are validated before use.
   private handleMessage(message: PanelMessage): void {
     const { action, key, index } = message;
     if (action === "markAllRead") {
@@ -110,6 +135,7 @@ export class FeedbackPanel {
     }
   }
 
+// Rendering is cached because the panel is rebuilt on every change.
   private async rendered(text: string): Promise<string> {
     const cached = this.renderCache.get(text);
     if (cached !== undefined) {

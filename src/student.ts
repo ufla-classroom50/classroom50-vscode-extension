@@ -1,3 +1,12 @@
+/**
+ * Student features inside an assignment repository.
+ *
+ * The integration point with teachers and autograders is the Feedback PR: any
+ * comment or review posted there (by a person or by a bot such as
+ * github-actions[bot]) becomes a notification. The extension does not depend
+ * on a specific autograder; it only reads the PR.
+ */
+
 import * as vscode from "vscode";
 import * as fs from "fs";
 import * as path from "path";
@@ -18,12 +27,26 @@ import { createStatusBarButton, openInBrowser } from "./ui";
 import { ExtensionConfig, Feedback, RepoInfo } from "./types";
 import { t } from "./i18n";
 
+// Above this many new feedback items at once, a single summary notification
+// is shown instead of one per item.
 const MAX_INDIVIDUAL_TOASTS = 3;
 
+/**
+ * Watches the Feedback PR of the open assignment and keeps the student informed.
+ *
+ * State saved per repository in VS Code's globalState (survives restarts):
+ * - seen keys: every feedback ever detected, so nothing is notified twice;
+ * - unread keys: feedback the student has not marked as read yet;
+ * - cache: the last list of feedback, so the panel opens instantly.
+ *
+ * The history is local to each VS Code installation: on another computer, old
+ * feedback appears again as unread (a known, accepted limitation).
+ */
 class FeedbackMonitor {
   private readonly seenKeys: Set<string>;
   private readonly unreadKeys: Set<string>;
   private feedback: Feedback[];
+// Unread comments saved by the previous version, migrated on the first check.
   private legacyUnreadKeys: Set<string>;
   private isChecking = false;
   private readonly feedbackItem: vscode.StatusBarItem;
@@ -69,6 +92,16 @@ class FeedbackMonitor {
     return this.unreadKeys.size;
   }
 
+/**
+ * Fetches the feedback and notifies the new items.
+ *
+ * Polling (run every `polling-interval-minutes`, on "Check Feedback" and after
+ * a submit) was chosen over GitHub webhooks: webhooks would need a public
+ * server to receive events, while polling runs entirely on the student's
+ * computer. The `isChecking` flag avoids overlapping checks.
+ *
+ * @returns how many new feedback items were found.
+ */
   async check(): Promise<number> {
     if (this.isChecking) {
       return 0;
@@ -117,6 +150,8 @@ class FeedbackMonitor {
     await this.panel.show(this.feedback, this.unreadKeys);
   }
 
+// A review counts as seen if its key was seen, or if all of its line comments
+// were seen by the previous version (which stored one key per line comment).
   private wasSeen(item: Feedback): boolean {
     if (this.seenKeys.has(item.key)) {
       return true;
@@ -156,6 +191,13 @@ class FeedbackMonitor {
     }
   }
 
+/**
+ * Shows the notification of a new feedback item. VS Code hides information
+ * notifications about 10 seconds after they appear, and extensions cannot
+ * change that, so the notification is only the alert: the feedback stays in
+ * the panel, in the highlighted status bar item and in the sidebar badge
+ * until the student marks it as read.
+ */
   private async promptAction(
     item: Feedback | undefined,
     message: string,
@@ -180,6 +222,7 @@ class FeedbackMonitor {
     return this.feedback.find((f) => f.key === key);
   }
 
+// Opening the feedback on GitHub also counts as reading it.
   private openOnGitHub(key: string, inlineIndex?: number): void {
     const item = this.find(key);
     if (!item) {
@@ -193,6 +236,11 @@ class FeedbackMonitor {
     this.markAsRead(key);
   }
 
+/**
+ * Opens the file of a line comment at the commented line. The path comes from
+ * GitHub, so it is resolved inside the workspace and rejected if it points
+ * outside of it (e.g. "../").
+ */
   private async openInlineFile(key: string, index: number): Promise<void> {
     const comment = this.find(key)?.inline[index];
     if (!comment) {
@@ -243,6 +291,11 @@ class FeedbackMonitor {
     void state.update(this.stateKey("legacyUnread"), undefined);
   }
 
+/**
+ * Updates the status bar item and the sidebar badge. With unread feedback the
+ * item uses the warning background, the only highlight colors VS Code allows
+ * for status bar items (warning and error).
+ */
   private updateIndicators(): void {
     const count = this.unreadKeys.size;
     if (count > 0) {
@@ -270,6 +323,10 @@ class FeedbackMonitor {
   }
 }
 
+/**
+ * Enables the student features of an assignment repository: feedback
+ * monitoring, feedback and support panels, status bar buttons and Submit.
+ */
 export async function registerStudentFeatures(
   context: vscode.ExtensionContext,
   token: string,
@@ -376,6 +433,10 @@ export async function registerStudentFeatures(
   context.subscriptions.push({ dispose: () => clearInterval(timer) });
 }
 
+/**
+ * Adds the button that opens the Feedback PR in the browser. Also used for
+ * teachers who open a student's repository.
+ */
 export function registerFeedbackPRButton(
   context: vscode.ExtensionContext,
   prUrl: string,
@@ -399,6 +460,13 @@ export function registerFeedbackPRButton(
   );
 }
 
+/**
+ * Submits the assignment and handles what comes after it:
+ * - synchronizes the local repository with the submitted version;
+ * - if the assignment has an autograder (`autograder: true` in the
+ *   configuration), schedules a feedback check a few minutes later, when the
+ *   autograder has usually finished. Without one, it only confirms the submit.
+ */
 async function submitAndScheduleCheck(
   context: vscode.ExtensionContext,
   monitor: FeedbackMonitor,
@@ -433,6 +501,10 @@ async function submitAndScheduleCheck(
   }
 }
 
+/**
+ * Explains the cases where the local repository could not simply match the
+ * submitted version (see gitsync.ts). Successful syncs need no message.
+ */
 async function reportSyncResult(result: SyncResult): Promise<void> {
   switch (result.status) {
     case "dirty":
