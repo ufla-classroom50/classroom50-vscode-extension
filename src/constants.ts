@@ -11,6 +11,7 @@ export const STUDENT_CLI_INSTALL_URL =
 
 export const COMMANDS = {
   checkFeedback: "classroom50-vscode-extension.checkFeedback",
+  openFeedback: "classroom50-vscode-extension.openFeedback",
   openFeedbackPR: "classroom50-vscode-extension.openFeedbackPR",
   openSupportLinks: "classroom50-vscode-extension.openSupportLinks",
   submitAssignment: "classroom50-vscode-extension.submitAssignment",
@@ -37,7 +38,7 @@ export const STATUS_BAR_PRIORITY = {
 
 export const ACTIONS = {
   viewOnGitHub: "View on GitHub",
-  markAsRead: "Mark as read",
+  openFeedback: "Open feedback",
   send: "Send",
   submit: "Submit",
   installGuide: "Installation guide",

@@ -252,6 +252,18 @@ async function openRepo(assignment: StudentAssignment): Promise<void> {
   );
 }
 
+let studentTreeView: vscode.TreeView<StudentNode> | undefined;
+
+export function setFeedbackBadge(count: number): void {
+  if (!studentTreeView) {
+    return;
+  }
+  studentTreeView.badge =
+    count > 0
+      ? { value: count, tooltip: `${count} unread feedback` }
+      : undefined;
+}
+
 export function registerStudentView(
   context: vscode.ExtensionContext,
   getToken: (interactive: boolean) => Promise<string | undefined>,
@@ -260,6 +272,7 @@ export function registerStudentView(
   const treeView = vscode.window.createTreeView(STUDENT_VIEW_ID, {
     treeDataProvider: provider,
   });
+  studentTreeView = treeView;
   let token: string | undefined;
   let login: string | undefined;
 

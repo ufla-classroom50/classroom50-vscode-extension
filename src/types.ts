@@ -11,17 +11,22 @@ export interface RepoInfo {
   repo: string;
 }
 
-export interface GitHubComment {
-  id: number;
-  body: string;
-  html_url: string;
-  user: { login: string };
-  path?: string;
+export interface InlineComment {
+  path: string;
   line?: number;
+  body: string;
+  url: string;
 }
 
-export interface TaggedComment extends GitHubComment {
-  uniqueKey: string;
+export interface Feedback {
+  key: string;
+  legacyKeys: string[];
+  author: string;
+  avatarUrl?: string;
+  createdAt: string;
+  body: string;
+  url: string;
+  inline: InlineComment[];
 }
 
 export interface StudentRepo {

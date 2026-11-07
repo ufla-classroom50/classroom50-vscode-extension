@@ -32,6 +32,11 @@
         "category": "Classroom 50"
       },
       {
+        "command": "classroom50-vscode-extension.openFeedback",
+        "title": "Open feedback",
+        "category": "Classroom 50"
+      },
+      {
         "command": "classroom50-vscode-extension.openFeedbackPR",
         "title": "Open feedback PR in browser",
         "category": "Classroom 50"
@@ -160,6 +165,10 @@
       "commandPalette": [
         {
           "command": "classroom50-vscode-extension.checkFeedback",
+          "when": "classroom50.isStudentRepo"
+        },
+        {
+          "command": "classroom50-vscode-extension.openFeedback",
           "when": "classroom50.isStudentRepo"
         },
         {

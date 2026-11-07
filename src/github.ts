@@ -1,10 +1,9 @@
 import { CONFIG_REPO_NAME, FEEDBACK_PR_TITLE, MAX_PAGES } from "./constants";
 import {
   AssignmentRef,
-  GitHubComment,
+  Feedback,
   StudentClassroom,
   StudentRepo,
-  TaggedComment,
 } from "./types";
 
 const GITHUB_API_URL = "https://api.github.com";
@@ -71,44 +70,122 @@ export async function fetchFeedbackPR(
   return pulls?.find((pr) => pr.title === FEEDBACK_PR_TITLE)?.number;
 }
 
-async function fetchCommentsFrom(
+async function requestAllPages<T>(
   token: string,
   path: string,
-  keyPrefix: string,
-): Promise<TaggedComment[]> {
-  const comments = await request<GitHubComment[]>(token, path);
-  return (comments ?? [])
-    .filter((c) => (c.body ?? "").trim().length > 0)
-    .map((c) => ({
-      ...c,
-      uniqueKey: `${keyPrefix}-${c.id}`,
-    }));
+): Promise<T[] | undefined> {
+  const items: T[] = [];
+  const separator = path.includes("?") ? "&" : "?";
+
+  for (let page = 1; page <= MAX_PAGES; page++) {
+    const pageItems = await request<T[]>(
+      token,
+      `${path}${separator}per_page=100&page=${page}`,
+    );
+    if (!pageItems) {
+      return page === 1 ? undefined : items;
+    }
+    items.push(...pageItems);
+    if (pageItems.length < 100) {
+      break;
+    }
+  }
+
+  return items;
 }
 
-export async function fetchAllComments(
+interface RawUser {
+  login: string;
+  avatar_url?: string;
+}
+
+interface RawIssueComment {
+  id: number;
+  body: string | null;
+  html_url: string;
+  user: RawUser | null;
+  created_at: string;
+}
+
+interface RawReview {
+  id: number;
+  body: string | null;
+  html_url: string;
+  user: RawUser | null;
+  submitted_at?: string;
+}
+
+interface RawReviewComment {
+  id: number;
+  body: string | null;
+  html_url: string;
+  path: string;
+  line?: number | null;
+  original_line?: number | null;
+  pull_request_review_id: number | null;
+}
+
+export async function fetchFeedback(
   token: string,
   org: string,
   repo: string,
   prNumber: number,
-): Promise<TaggedComment[]> {
-  const [issueComments, reviewComments, reviews] = await Promise.all([
-    fetchCommentsFrom(
+): Promise<Feedback[] | undefined> {
+  const base = `/repos/${org}/${repo}`;
+  const [issueComments, reviews, reviewComments] = await Promise.all([
+    requestAllPages<RawIssueComment>(
       token,
-      `/repos/${org}/${repo}/issues/${prNumber}/comments?per_page=100`,
-      "issue",
+      `${base}/issues/${prNumber}/comments`,
     ),
-    fetchCommentsFrom(
+    requestAllPages<RawReview>(token, `${base}/pulls/${prNumber}/reviews`),
+    requestAllPages<RawReviewComment>(
       token,
-      `/repos/${org}/${repo}/pulls/${prNumber}/comments?per_page=100`,
-      "review",
-    ),
-    fetchCommentsFrom(
-      token,
-      `/repos/${org}/${repo}/pulls/${prNumber}/reviews?per_page=100`,
-      "pr-review",
+      `${base}/pulls/${prNumber}/comments`,
     ),
   ]);
-  return [...issueComments, ...reviewComments, ...reviews];
+  if (!issueComments || !reviews || !reviewComments) {
+    return undefined;
+  }
+
+  const fromComments: Feedback[] = issueComments
+    .filter((c) => (c.body ?? "").trim().length > 0)
+    .map((c) => ({
+      key: `issue-${c.id}`,
+      legacyKeys: [],
+      author: c.user?.login ?? "unknown",
+      avatarUrl: c.user?.avatar_url,
+      createdAt: c.created_at,
+      body: c.body ?? "",
+      url: c.html_url,
+      inline: [],
+    }));
+
+  const fromReviews: Feedback[] = reviews
+    .map((review) => {
+      const comments = reviewComments.filter(
+        (c) => c.pull_request_review_id === review.id,
+      );
+      return {
+        key: `pr-review-${review.id}`,
+        legacyKeys: comments.map((c) => `review-${c.id}`),
+        author: review.user?.login ?? "unknown",
+        avatarUrl: review.user?.avatar_url,
+        createdAt: review.submitted_at ?? "",
+        body: review.body ?? "",
+        url: review.html_url,
+        inline: comments.map((c) => ({
+          path: c.path,
+          line: c.line ?? c.original_line ?? undefined,
+          body: c.body ?? "",
+          url: c.html_url,
+        })),
+      };
+    })
+    .filter((f) => f.body.trim().length > 0 || f.inline.length > 0);
+
+  return [...fromComments, ...fromReviews].sort((a, b) =>
+    b.createdAt.localeCompare(a.createdAt),
+  );
 }
 
 async function fetchOrgRepos(

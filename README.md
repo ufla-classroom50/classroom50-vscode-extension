@@ -75,28 +75,35 @@ extensão não exibe botões, mensagens nem pedidos de login.
 ### Notificações de feedback
 
 A extensão verifica periodicamente o Feedback Pull Request da atividade. Ao encontrar um
-comentário novo, notifica o aluno em três níveis:
+feedback novo, mostra uma notificação com quem fez o feedback, uma prévia do texto e, se
+houver, a quantidade de comentários de linha (`📍 Check inline comments`).
 
-- **Nível 1** — aviso de que existe um novo feedback, com o nome da atividade
-- **Nível 2** — prévia do conteúdo do comentário
-- **Nível 3** — botão **View on GitHub** para abrir o comentário completo
+Os comentários são agrupados como o professor os escreveu:
 
-São detectados três tipos de comentário no Feedback PR:
+- **Comentário geral**, feito na conversa do PR: um feedback
+- **Review** (*Review changes*): um feedback com o texto geral e todos os comentários de
+  linha daquela revisão
 
-- **Comentários gerais**, feitos na conversa do PR
-- **Reviews**, o texto geral escrito ao concluir uma revisão em *Review changes*
-- **Comentários inline**, feitos em uma linha específica do código. Nesse caso, a notificação
-  indica o arquivo e a linha (ex.: `📍 Main.java:42`)
+### Painel de feedback
+
+O botão **Open feedback** da notificação, ou o ✉️ da barra de status, abre o painel de
+feedback ao lado do código. Ele mostra:
+
+- Os feedbacks não lidos em destaque, com autor, data e texto formatado
+- Os comentários de linha com arquivo e linha. Clicar em `📍 Livro.java:42` abre o arquivo
+  naquela linha
+- Os feedbacks já lidos em uma seção recolhida **Read**, com menos destaque
 
 Um feedback é marcado como lido quando o aluno clica em **Mark as read** ou em
-**View on GitHub**. Os feedbacks não lidos continuam disponíveis mesmo que o aluno feche a
-notificação ou reinicie o VS Code.
+**View on GitHub**. Enquanto houver feedback não lido, o ✉️ da barra de status fica com fundo
+amarelo e o ícone Classroom 50 da barra lateral mostra a quantidade. Os não lidos continuam
+disponíveis mesmo que o aluno feche a notificação ou reinicie o VS Code.
 
 ### Barra de status
 
 | Botão | Função |
 |---|---|
-| ✉️ **N** | Quantidade de feedbacks não lidos (aparece só quando há algum). Abre a lista para ler ou marcar como lido |
+| ✉️ **N** | Abre o painel de feedback. Com feedback não lido, mostra a quantidade em destaque |
 | 🔔 **Check Feedback** | Verifica agora, sem esperar o intervalo configurado |
 | **Feedback PR** | Abre o Feedback Pull Request no navegador |
 | ☁️ **Submit** | Entrega a atividade |
@@ -257,6 +264,7 @@ O comando gera o arquivo `classroom50-vscode-extension-<versão>.vsix` na raiz d
 | Arquivo | Responsabilidade |
 |---|---|
 | `extension.ts` | Ponto de entrada: autenticação, confiança da pasta e ativação dos recursos de aluno e professor |
+| `feedbackPanel.ts` | Painel de feedback (Webview) com os feedbacks lidos e não lidos |
 | `student.ts` | Monitoramento de feedback, notificações e botões do aluno |
 | `submit.ts` | Execução do `gh student submit` como Task do VS Code |
 | `gitsync.ts` | Sincronização do repositório local após o submit |
