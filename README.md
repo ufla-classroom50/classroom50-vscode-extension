@@ -8,7 +8,33 @@ uma atividade e envia avisos para eles por uma guia lateral.
 Desenvolvida como Trabalho de Conclusão de Curso (TCC) —
 Sistemas de Informação, Universidade Federal de Lavras (UFLA).
 
+**Autor:** [João Pedro Alves Carneiro Valadão](https://github.com/crnvsk)<br>
 **Orientador:** Prof. Júlio César Alves
+
+---
+
+## Demonstração
+
+**Aceitar uma atividade pela aba lateral** — a atividade é aceita, clonada e aberta sem usar o terminal.
+
+![Aceitar uma atividade](docs/images/aceitar-atividade.gif)
+
+**Receber feedback** — a notificação chega, o ✉️ fica em destaque e o painel mostra o feedback
+com os comentários de linha, que abrem o arquivo na linha comentada.
+
+![Receber feedback](docs/images/notificacao-feedback.gif)
+
+**Entregar a atividade** — o botão Entregar envia o trabalho com o `gh student submit`.
+
+![Entregar a atividade](docs/images/entregar.gif)
+
+**Materiais de apoio** — os links configurados pelo professor abrem em um painel.
+
+![Materiais de apoio](docs/images/materiais-apoio.gif)
+
+**Modo professor** — o professor escolhe a atividade, vê os alunos e envia avisos.
+
+![Modo professor](docs/images/professor.gif)
 
 ---
 
@@ -312,5 +338,15 @@ O comando gera o arquivo `classroom50-vscode-extension-<versão>.vsix` na raiz d
 
 ## Status
 
-Versão 0.1.0. Funcionalidades de aluno e professor implementadas e validadas em ambiente real
-do Classroom 50.
+Versão 0.2.0. Funcionalidades de aluno e professor implementadas e validadas em ambiente real
+do Classroom 50. O histórico de mudanças está no [CHANGELOG](CHANGELOG.md).
+
+---
+
+## Autor
+
+**João Pedro Alves Carneiro Valadão** — [@crnvsk](https://github.com/crnvsk)<br>
+Sistemas de Informação, Universidade Federal de Lavras (UFLA)<br>
+Orientador: Prof. Júlio César Alves
+
+Licença [MIT](LICENSE).

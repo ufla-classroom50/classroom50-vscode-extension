@@ -2,7 +2,11 @@
   "name": "classroom50-vscode-extension",
   "displayName": "Classroom 50",
   "description": "%extension.description%",
-  "version": "0.1.0",
+  "author": {
+    "name": "João Pedro Alves Carneiro Valadão",
+    "url": "https://github.com/crnvsk"
+  },
+  "version": "0.2.0",
   "publisher": "ufla-classroom50",
   "repository": {
     "type": "git",
